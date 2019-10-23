@@ -124,6 +124,9 @@
     (visual-basic-mode . (("2"  . "Visual Basic")))
     ))
 
+(defconst play-code-rextester-compiler-args
+  `((,(caadr (assoc 'go-mode play-code-rextester-languages)) . "-o a.out source_file.go")))
+
 (defconst play-code-labstack-languages
   '((sh-mode           . (("bash"         . "Bash")))
     (c-mode            . (("c"            . "C")))
@@ -181,6 +184,8 @@ LANG-ID to specific the language."
                    lang-id
                    "&EditorChoiceWrapper=1&LayoutChoiceWrapper=1&Program="
                    (url-encode-url code)
+                   "&CompilerArgs="
+                   (assoc-default lang-id play-code-rextester-compiler-args)
                    "&IsInEditMode=False&IsLive=False"))
          (content-buf (url-retrieve-synchronously
                        "https://rextester.com/rundotnet/run")))
