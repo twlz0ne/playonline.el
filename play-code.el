@@ -1,4 +1,4 @@
-;;; play-code.el --- Send code to online playgrounds -*- lexical-binding: t; -*-
+;;; play-code.el --- Play code with online playgrounds -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2019 Gong Qijian <gongqijian@gmail.com>
 
@@ -24,12 +24,13 @@
 
 ;;; Commentary:
 
-;; Send code to online playgrounds:
+;; Play code with online playgrounds:
 ;;
-;; - play-code-send-region
-;; - play-code-send-buffer
-;; - play-code-send-block (require org-mode / markdown)
+;; - play-code-region
+;; - play-code-buffer
+;; - play-code-block (require org-mode / markdown)
 ;;
+;; See README.md for more information.
 
 ;;; Change Log:
 
