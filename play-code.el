@@ -245,7 +245,21 @@ LANG-ID to specific the language."
          (concat (assoc-default 'stdout resp)
                  (assoc-default 'stderr resp)))))))
 
-;;; 
+;;; Wrapper
+
+(defconst play-code-main-wrap-functions
+  '((go-mode . play-code--go-ensure-main-wrap)))
+
+(defun play-code--go-ensure-main-wrap (body)
+  "Check to see if main is already defined in BODY. If not, add it."
+  (if (string-match-p "^[ \t]*func main *() *{" body)
+      body
+    (concat "package main\n"
+            (when (string-match-p "^[ \t]*fmt\." body)
+              "import \"fmt\"\n")
+            "func main() {\n" body "\n}\n")))
+
+;;;
 
 (defun play-code--pop-to-buffer (buf)
   "Display buffer specified by BUF and select its window."
@@ -325,17 +339,18 @@ opposite a certain version of lang in `play-code-xxx-languags'."
     nil))
 
 (defun play-code--get-lang-and-function (mode)
-  "Return (lang function) for MODE."
+  "Return (lang sender wrapper) for MODE."
   (pcase-let*
-      ((`(,langs . ,func) (play-code--get-ground mode))
+      ((`(,langs . ,sender) (play-code--get-ground mode))
        (`(,lang . ,_desc)
          (cond ((> (length langs) 1)
                 (rassoc
                  (completing-read "Choose: " (mapcar (lambda (it) (cdr it)) langs))
                  langs))
-               (t (car langs)))))
-    ;; (message "==> lang: %s, func: %s" lang func)
-    (list lang func)))
+               (t (car langs))))
+       (`(,_mode . ,wrapper) (assoc mode play-code-main-wrap-functions)))
+    ;; (message "==> lang: %s, sender: %s, wrapper: %s" lang sender wrapper)
+    (list lang sender wrapper)))
 
 (defun play-code-orgmode-src-block ()
   "Return orgmode src block in the form of (mode code bounds)."
@@ -378,12 +393,14 @@ opposite a certain version of lang in `play-code-xxx-languags'."
             (or (play-code-markdown-src-block)
                 (error "No code block at point")))
            (_ (error "Don't know how to detect the block, please use `play-code-region' instead"))))
-       (`(,lang ,func)
+       (`(,lang ,sender ,wrapper)
            (play-code--get-lang-and-function
             (save-restriction
               (apply 'narrow-to-region bounds)
               (play-code--get-mode-alias mode)))))
-    (funcall func lang code)))
+    (funcall sender lang (if wrapper
+                               (funcall wrapper code)
+                             code))))
 
 ;;;###autoload
 (defun play-code-region (start end)
@@ -399,13 +416,16 @@ opposite a certain version of lang in `play-code-xxx-languags'."
             (or (play-code-markdown-src-block)
                 (error "No code in region")))
            (_ (list major-mode nil nil))))
-       (`(,lang ,func)
+       (`(,lang ,sender ,wrapper)
          (play-code--get-lang-and-function
           (save-restriction
             (when bounds
               (apply 'narrow-to-region bounds))
             (play-code--get-mode-alias mode)))))
-    (funcall func lang (buffer-substring-no-properties start end))))
+    (let ((code (buffer-substring-no-properties start end)))
+      (funcall sender lang (if wrapper
+                               (funcall wrapper code)
+                             code)))))
 
 ;;;###autoload
 (defun play-code-buffer ()
