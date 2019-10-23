@@ -248,16 +248,81 @@ LANG-ID to specific the language."
 ;;; Wrapper
 
 (defconst play-code-main-wrap-functions
-  '((go-mode . play-code--go-ensure-main-wrap)))
+  '((go-mode        . play-code--go-ensure-main-wrap)
+    (c-mode         . play-code--c-ensure-main-wrap)
+    (c:gcc-mode     . play-code--c-ensure-main-wrap)
+    (c:clang-mode   . play-code--c-ensure-main-wrap)
+    (c:vc-mode      . play-code--c-ensure-main-wrap)
+    (cpp-mode       . play-code--cpp-ensure-main-wrap)
+    (cpp:gcc-mode   . play-code--cpp-ensure-main-wrap)
+    (cpp:clang-mode . play-code--cpp-ensure-main-wrap)
+    (cpp:vcpp-mode  . play-code--cpp-ensure-main-wrap)
+    (csharp-mode    . play-code--csharp-ensure-main-wrap)
+    (d-mode         . play-code--d-ensure-main-wrap)
+    (objc-mode      . play-code--objc-ensure-main-wrap)
+    (rust-mode      . play-code--rust-ensure-main-wrap)
+    ))
+
+(defun play-code--c-ensure-main-wrap (body)
+  "Wrap c BODY in 'main' function if necessary."
+  (if (string-match-p "^[ \t]*int[ \n\t]*main *(" body)
+      body
+    (concat "#include <stdio.h>\n"
+            "int main() {\n"
+            body
+            "\nreturn 0;"
+            "\n}\n")))
+
+(defun play-code--cpp-ensure-main-wrap (body)
+  "Wrap cpp BODY in 'main' function if necessary."
+  (if (string-match-p "^[ \t]*int[ \n\t]*main *(" body)
+      body
+    (concat "#include <iostream>\n"
+            "int main() {\n"
+            body
+            "\nreturn 0;"
+            "\n}\n")))
+
+(defun play-code--csharp-ensure-main-wrap (body)
+  "Wrap csharp BODY in 'main' function if necessary."
+  (if (string-match-p "^[ \t]*public static void Main *(" body)
+      body
+    (concat "using System;\n"
+            "public class Code\n"
+            "{\npublic static void Main(string[] args)\n{\n" body "\n}\n}\n")))
+
+(defun play-code--d-ensure-main-wrap (body)
+  "Wrap d BODY in 'main' function if necessary."
+  (if (string-match-p "^[ \t]*void main *()" body)
+      body
+    (concat "import std.stdio;\n"
+            "void main() {\n" body "\n}\n")))
 
 (defun play-code--go-ensure-main-wrap (body)
-  "Check to see if main is already defined in BODY. If not, add it."
+  "Wrap go BODY in 'main' function if necessary."
   (if (string-match-p "^[ \t]*func main *() *{" body)
       body
     (concat "package main\n"
             (when (string-match-p "^[ \t]*fmt\." body)
               "import \"fmt\"\n")
             "func main() {\n" body "\n}\n")))
+
+(defun play-code--objc-ensure-main-wrap (body)
+  "Wrap objc BODY in 'main' function if necessary."
+  (if (string-match-p "^[ \t]*int main *(" body)
+      body
+    (concat "#import <Foundation/Foundation.h>\n"
+            "int main (int argc, const char * argv[])\n"
+            "{\n"
+            body
+            "\nreturn 0;"
+            "\n}\n")))
+
+(defun play-code--rust-ensure-main-wrap (body)
+  "Wrap rust BODY in 'main' function if necessary."
+  (if (string-match-p "^[ \t]*fn main *(" body)
+      body
+    (concat "fn main() {\n" body "\n}\n")))
 
 ;;;
 
