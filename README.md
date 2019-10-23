@@ -4,8 +4,8 @@ Play code with online playgrounds.
 
 Currently support:
 
-- [rextester.com](rextester.com)(priority)
-- {labstack.com}(code.labstack.com)
+- [rextester.com](rextester.com) (priority)
+- [labstack.com](code.labstack.com)
 
 The priority can be changed by modifying `play-code-ground-alist`.
 
