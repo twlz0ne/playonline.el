@@ -190,7 +190,8 @@
 (defun play-code-send-to-rextester (lang-id code)
   "Send CODE to `rextester.com', return the execution result.
 LANG-ID to specific the language."
-  (let* ((url-request-method "POST")
+  (let* ((compiler-args (assoc-default lang-id play-code-rextester-compiler-args))
+         (url-request-method "POST")
          (url-request-extra-headers
            `(("content-type"    . "application/x-www-form-urlencoded; charset=UTF-8")
              ("accept"          . "text/plain, */*; q=0.01")
@@ -199,12 +200,13 @@ LANG-ID to specific the language."
            (concat "LanguageChoiceWrapper="
                    lang-id
                    "&EditorChoiceWrapper=1&LayoutChoiceWrapper=1&Program="
-                   (url-encode-url code)
+                   (url-hexify-string code)
                    "&CompilerArgs="
-                   (assoc-default lang-id play-code-rextester-compiler-args)
+                   (when compiler-args (url-hexify-string compiler-args))
                    "&IsInEditMode=False&IsLive=False"))
          (content-buf (url-retrieve-synchronously
                        "https://rextester.com/rundotnet/run")))
+    ;; (message "==> url-request-data:\n%s" url-request-data)
     (play-code--handle-json-response
      content-buf
      (lambda (resp)
