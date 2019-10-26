@@ -69,8 +69,12 @@
 ;;; playgrounds
 
 (defconst play-code-ground-alist
-  '((play-code-rextester-languages . play-code-send-to-rextester)
+  '((play-code-rust-playground . play-code-send-to-rust-playground)
+    (play-code-rextester-languages . play-code-send-to-rextester)
     (play-code-labstack-languages  . play-code-send-to-labstack)))
+
+(defconst play-code-rust-playground
+  '((rust-mode . (("stable" . "Rust (stable)")))))
 
 (defconst play-code-rextester-languages
   '((ada-mode          . (("39" . "Ada")))
@@ -186,6 +190,30 @@
     (tcl-mode          . (("tcl"          . "TCL")))
     (typescript-mode   . (("typescript"   . "TypeScript")))
     ))
+
+(defun play-code-send-to-rust-playground (channel-id code)
+  "Send CODE to `play.rust-lang.org', return the execution result."
+  (let* ((url-request-method "POST")
+         (url-request-extra-headers
+           '(("content-type"     . "application/json;charset=UTF-8")
+             ("accept"           . "application/json")
+             ("accept-encoding"  . "gzip")))
+         (url-request-data (json-encode-plist
+                            `(:channel ,channel-id
+                              :mode "debug"
+                              :edition "2018"
+                              :crateType "bin"
+                              :tests :json-false
+                              :code ,code
+                              :backtrace :json-false)))
+         (content-buf (url-retrieve-synchronously
+                       "https://play.rust-lang.org/execute")))
+    (play-code--handle-json-response
+     content-buf
+     (lambda (resp)
+       (if (assoc-default 'success resp)
+           (assoc-default 'stdout resp)
+         (assoc-default 'stderr resp))))))
 
 (defun play-code-send-to-rextester (lang-id code)
   "Send CODE to `rextester.com', return the execution result.
