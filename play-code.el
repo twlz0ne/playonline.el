@@ -69,9 +69,13 @@
 ;;; playgrounds
 
 (defconst play-code-ground-alist
-  '((play-code-rust-playground . play-code-send-to-rust-playground)
+  '((play-code-go-playground   . play-code-send-to-go-playground)
+    (play-code-rust-playground . play-code-send-to-rust-playground)
     (play-code-rextester-languages . play-code-send-to-rextester)
     (play-code-labstack-languages  . play-code-send-to-labstack)))
+
+(defconst play-code-go-playground
+  '((go-mode . (("go" . "Go")))))
 
 (defconst play-code-rust-playground
   '((rust-mode . (("stable" . "Rust (stable)")))))
@@ -190,6 +194,29 @@
     (tcl-mode          . (("tcl"          . "TCL")))
     (typescript-mode   . (("typescript"   . "TypeScript")))
     ))
+
+(defun play-code-send-to-go-playground (_ code)
+  "Send CODE to `play.golang.org', return the execution result."
+  (let* ((url-request-method "POST")
+         (url-request-extra-headers
+           `(("content-type"    . "application/x-www-form-urlencoded; charset=UTF-8")
+             ("accept"          . "application/json, text/javascript, */*; q=0.01")
+             ("accept-encoding" . "gzip")))
+         (url-request-data
+           (concat "version=2&body="
+                   (url-hexify-string code)
+                   "&withVet=true"))
+         (content-buf (url-retrieve-synchronously
+                       "https://play.golang.org/compile")))
+    ;; (message "==> url-request-data:\n%s" url-request-data)
+    (play-code--handle-json-response
+     content-buf
+     (lambda (resp)
+       ;; (message "==> resp object:\n%S" resp)
+       (let ((errors (assoc-default 'Errors resp)))
+         (if (string= errors "")
+             (assoc-default 'Message (aref (assoc-default 'Events resp) 0))
+             errors))))))
 
 (defun play-code-send-to-rust-playground (channel-id code)
   "Send CODE to `play.rust-lang.org', return the execution result."
