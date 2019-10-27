@@ -238,9 +238,9 @@
     (play-code--handle-json-response
      content-buf
      (lambda (resp)
-       (if (assoc-default 'success resp)
-           (assoc-default 'stdout resp)
-         (assoc-default 'stderr resp))))))
+       (if (eq :json-false (assoc-default 'success resp))
+           (assoc-default 'stderr resp)
+         (assoc-default 'stdout resp))))))
 
 (defun play-code-send-to-rextester (lang-id code)
   "Send CODE to `rextester.com', return the execution result.
