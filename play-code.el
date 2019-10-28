@@ -39,6 +39,7 @@
 ;;; Code:
 
 (require 'url-util)
+(require 'url-http)
 (require 'json)
 (require 'dash)
 
@@ -392,20 +393,25 @@ LANG-ID to specific the language."
   "Handle json response in URL-CONTENT-BUF.
 Function CALLBACK accept an alist, and return output string."
   (with-current-buffer url-content-buf
-    (goto-char (point-min))
-    (re-search-forward "\n\n")
-    ;; (message "==> resp string:\n%s" (buffer-substring (point) (point-max)))
-    (let* ((resp (json-read-from-string (buffer-substring (point) (point-max))))
-           (output (funcall callback resp))
-           (output-buf (get-buffer-create play-code-buffer-name)))
-      (cond (play-code-output-to-buffer-p
-             (with-current-buffer output-buf
-               (read-only-mode -1)
-               (erase-buffer)
-               (insert output)
-               (read-only-mode 1)
-               (play-code--pop-to-buffer output-buf)))
-            (t output)))))
+    (let ((http-code (save-excursion (url-http-parse-response)))
+          (http-body (save-excursion (goto-char (point-min))
+                                     (re-search-forward "\n\n")
+                                     (buffer-substring (point) (point-max)))))
+      ;; (message "==> http code:\n%s" http-code)
+      ;; (message "==> http body:\n%s" http-body)
+      (pcase http-code
+        (200 (let* ((resp (json-read-from-string http-body))
+                    (output (funcall callback resp))
+                    (output-buf (get-buffer-create play-code-buffer-name)))
+               (cond (play-code-output-to-buffer-p
+                      (with-current-buffer output-buf
+                        (read-only-mode -1)
+                        (erase-buffer)
+                        (insert output)
+                        (read-only-mode 1)
+                        (play-code--pop-to-buffer output-buf)))
+                     (t output))))
+        (_ (error http-body))))))
 
 (defun play-code--get-shebang-command ()
   "Get shabang program."
