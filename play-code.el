@@ -226,14 +226,16 @@
            '(("content-type"     . "application/json;charset=UTF-8")
              ("accept"           . "application/json")
              ("accept-encoding"  . "gzip")))
-         (url-request-data (json-encode-plist
-                            `(:channel ,channel-id
-                              :mode "debug"
-                              :edition "2018"
-                              :crateType "bin"
-                              :tests :json-false
-                              :code ,code
-                              :backtrace :json-false)))
+         (url-request-data (encode-coding-string
+                            (json-encode-plist
+                             `(:channel ,channel-id
+                               :mode "debug"
+                               :edition "2018"
+                               :crateType "bin"
+                               :tests :json-false
+                               :code ,code
+                               :backtrace :json-false))
+                            'utf-8))
          (content-buf (url-retrieve-synchronously
                        "https://play.rust-lang.org/execute")))
     (play-code--handle-json-response
@@ -283,14 +285,16 @@ LANG-ID to specific the language."
            '(("content-type"     . "application/json;charset=UTF-8")
              ("accept"           . "application/json, text/plain, */*")
              ("accept-encoding"  . "gzip")))
-         (url-request-data (json-encode-plist
-                            `(:notes ""
-                              :language (:id ,(format "%s" lang-id)
-                                         :name ,(format "%s" name)
-                                         :version ""
-                                         :code ,code
-                                         :text ,(format "%s (<version>)" name))
-                              :content ,code)))
+         (url-request-data (encode-coding-string
+                            (json-encode-plist
+                             `(:notes ""
+                               :language (:id ,(format "%s" lang-id)
+                                          :name ,(format "%s" name)
+                                          :version ""
+                                          :code ,code
+                                          :text ,(format "%s (<version>)" name))
+                               :content ,code))
+                            'utf-8))
          (content-buf (url-retrieve-synchronously
                        "https://code.labstack.com/api/v1/run")))
     (play-code--handle-json-response
