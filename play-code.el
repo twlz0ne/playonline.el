@@ -217,7 +217,7 @@
        (let ((errors (assoc-default 'Errors resp)))
          (if (string= errors "")
              (assoc-default 'Message (aref (assoc-default 'Events resp) 0))
-             errors))))))
+           errors))))))
 
 (defun play-code-send-to-rust-playground (channel-id code)
   "Send CODE to `play.rust-lang.org', return the execution result."
@@ -520,13 +520,13 @@ opposite a certain version of lang in `play-code-xxx-languags'."
                 (error "No code block at point")))
            (_ (error "Don't know how to detect the block, please use `play-code-region' instead"))))
        (`(,lang ,sender ,wrapper)
-           (play-code--get-lang-and-function
-            (save-restriction
-              (apply 'narrow-to-region bounds)
-              (play-code--get-mode-alias mode)))))
+         (play-code--get-lang-and-function
+          (save-restriction
+            (apply 'narrow-to-region bounds)
+            (play-code--get-mode-alias mode)))))
     (funcall sender lang (if wrapper
-                               (funcall wrapper code)
-                             code))))
+                             (funcall wrapper code)
+                           code))))
 
 ;;;###autoload
 (defun play-code-region (start end)
