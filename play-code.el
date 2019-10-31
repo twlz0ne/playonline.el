@@ -24,17 +24,13 @@
 
 ;;; Commentary:
 
-;; Play code with online playgrounds:
-;;
-;; - play-code-region
-;; - play-code-buffer
-;; - play-code-block (require org-mode / markdown)
-;;
+;; Play code with online playgrounds.
 ;; See README.md for more information.
 
 ;;; Change Log:
 
 ;;  0.1.0  2019/10/11  Initial version.
+;;  0.1.1  2019/10/31  Add `play-code', delete `play-code{buffer,region,block}'
 
 ;;; Code:
 
@@ -480,88 +476,71 @@ opposite a certain version of lang in `play-code-xxx-languags'."
                (t (car langs))))
        (`(,_mode . ,wrapper) (assoc mode play-code-main-wrap-functions)))
     ;; (message "==> lang: %s, sender: %s, wrapper: %s" lang sender wrapper)
+    (when (or (not lang)
+              (not sender))
+      (error "No lang-id or sender found"))
     (list lang sender wrapper)))
 
-(defun play-code-orgmode-src-block ()
+(defun play-code-orgmode-src-block (&optional beg end)
   "Return orgmode src block in the form of (mode code bounds)."
   (require 'org)
   (-if-let* ((src-element (org-element-at-point)))
       (list (org-src--get-lang-mode (org-element-property :language src-element))
-            (org-element-property :value src-element)
+            (if (region-active-p)
+                (buffer-substring-no-properties beg end)
+              (org-element-property :value src-element))
             (save-excursion
               (goto-char (org-babel-where-is-src-block-head src-element))
               (looking-at org-babel-src-block-regexp)
               (list (match-beginning 5) (match-end 5))))))
 
-(defun play-code-markdown-src-block ()
+(defun play-code-markdown-src-block (&optional beg end)
   "Return markdown src block in the form of (mode code bounds)."
   (require 'markdown-mode)
   (save-excursion
     (-if-let* ((lang (markdown-code-block-lang))
                (bounds (markdown-get-enclosing-fenced-block-construct))
-               (begin (progn
-                        (goto-char (nth 0 bounds)) (point-at-bol 2)))
-               (end (progn
+               (beg (if (region-active-p)
+                        beg
+                      (goto-char (nth 0 bounds)) (point-at-bol 2)))
+               (end (if (region-active-p)
+                        end
                       (goto-char (nth 1 bounds)) (point-at-bol 1))))
         (list (markdown-get-lang-mode lang)
-              (buffer-substring-no-properties begin end)
-              (list begin end)))))
+              (buffer-substring-no-properties beg end)
+              (list beg end)))))
 
 ;;;
 
 ;;;###autoload
-(defun play-code-block ()
-  "Send code block of orgmode / markdown to the playground."
-  (interactive)
+(defun play-code (&optional beg end)
+  "Play code online.
+
+This function can be applied to:
+- buffer
+- region
+- block (or region in block) ;; require org-mode / markdown
+"
+  (interactive "r")
   (pcase-let*
       ((`(,mode ,code ,bounds)
          (pcase major-mode
-           (`org-mode
-            (or (play-code-orgmode-src-block)
-                (error "No code block at point")))
-           (`markdown-mode
-            (or (play-code-markdown-src-block)
-                (error "No code block at point")))
-           (_ (error "Don't know how to detect the block, please use `play-code-region' instead"))))
-       (`(,lang ,sender ,wrapper)
-         (play-code--get-lang-and-function
-          (save-restriction
-            (apply 'narrow-to-region bounds)
-            (play-code--get-mode-alias mode)))))
-    (funcall sender lang (if wrapper
-                             (funcall wrapper code)
-                           code))))
-
-;;;###autoload
-(defun play-code-region (start end)
-  "Send the region between START and END to the Playground."
-  (interactive "r")
-  (pcase-let*
-      ((`(,mode ,_ ,bounds)
-         (pcase major-mode
-           (`org-mode
-            (or (play-code-orgmode-src-block)
-                (error "No code in region")))
-           (`markdown-mode
-            (or (play-code-markdown-src-block)
-                (error "No code in region")))
-           (_ (list major-mode nil nil))))
+           (`org-mode (play-code-orgmode-src-block beg end))
+           (`markdown-mode (play-code-markdown-src-block beg end))
+           (_ (list major-mode
+                    (if (region-active-p)
+                        (buffer-substring-no-properties beg end)
+                      (buffer-substring-no-properties (point-min) (point-max)))
+                    nil))))
        (`(,lang ,sender ,wrapper)
          (play-code--get-lang-and-function
           (save-restriction
             (when bounds
               (apply 'narrow-to-region bounds))
             (play-code--get-mode-alias mode)))))
-    (let ((code (buffer-substring-no-properties start end)))
-      (funcall sender lang (if wrapper
-                               (funcall wrapper code)
-                             code)))))
-
-;;;###autoload
-(defun play-code-buffer ()
-  "Like `play-code-region', but acts on the entire buffer."
-  (interactive)
-  (play-code-region (point-min) (point-max)))
+    (funcall sender lang (if wrapper
+                             (funcall wrapper code)
+                           code))))
 
 (provide 'play-code)
 

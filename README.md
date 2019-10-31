@@ -18,8 +18,14 @@ Clone this repository, then add the following to your `.emacs`:
 (require 'play-code)
 ```
 
-## Functions
+## Usage
 
-- `play-code-region`
-- `play-code-buffer`
-- `play-code-block` (require org-mode / markdown)
+```
+M-x play-code
+```
+
+This function can be applied to:
+
+- buffer
+- region
+- block (or region in block) ;; require org-mode / markdown
