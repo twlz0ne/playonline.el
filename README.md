@@ -4,12 +4,12 @@ Play code with online playgrounds.
 
 Currently support:
 
-- [Go playground](https://play.golang.org/)     (offical)
-- [Rust playground](https://play.rust-lang.org) (offical)
+- [Go playground](https://play.golang.org/)     (official)
+- [Rust playground](https://play.rust-lang.org) (official)
 - [rextester](https://rextester.com)            (third-party)
 - [labstack](https://code.labstack.com)         (third-party)
 
-The priority of offical playground is higher than the third-party, it can be changed by modifying `play-code-ground-alist`.
+The priority of official playground is higher than the third-party, it can be changed by modifying `play-code-ground-alist`.
 
 ## Installation
 
