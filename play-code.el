@@ -136,16 +136,16 @@
     ))
 
 (defconst play-code-rextester-compiler-args
-  `((,(caadr (assoc 'c:gcc-mode     play-code-rextester-languages)) . "-Wall -std=gnu99 -O2 -o a.out source_file.c")
-    (,(caadr (assoc 'c:clang-mode   play-code-rextester-languages)) . "-Wall -std=gnu99 -O2 -o a.out source_file.c")
-    (,(caadr (assoc 'c:vc-mode      play-code-rextester-languages)) . "source_file.c -o a.exe")
-    (,(caadr (assoc 'c++:gcc-mode   play-code-rextester-languages)) . "-Wall -std=c++14 -O2 -o a.out source_file.cpp")
-    (,(caadr (assoc 'c++:clang-mode play-code-rextester-languages)) . "-Wall -std=c++14 -stdlib=libc++ -O2 -o a.out source_file.cpp")
-    (,(caadr (assoc 'c++:vc++-mode  play-code-rextester-languages)) . "source_file.cpp -o a.exe /EHsc /MD /I C:\\boost_1_60_0 /link /LIBPATH:C:\\boost_1_60_0\\stage\\lib")
-    (,(caadr (assoc 'd-mode         play-code-rextester-languages)) . "source_file.d -ofa.out")
-    (,(caadr (assoc 'go-mode        play-code-rextester-languages)) . "-o a.out source_file.go")
-    (,(caadr (assoc 'haskell-mode   play-code-rextester-languages)) . "-o a.out source_file.hs")
-    (,(caadr (assoc 'objc-mode      play-code-rextester-languages)) . "-MMD -MP -DGNUSTEP -DGNUSTEP_BASE_LIBRARY=1 -DGNU_GUI_LIBRARY=1 -DGNU_RUNTIME=1 -DGNUSTEP_BASE_LIBRARY=1 -fno-strict-aliasing -fexceptions -fobjc-exceptions -D_NATIVE_OBJC_EXCEPTIONS -pthread -fPIC -Wall -DGSWARN -DGSDIAGNOSE -Wno-import -g -O2 -fgnu-runtime -fconstant-string-class=NSConstantString -I. -I /usr/include/GNUstep -I/usr/include/GNUstep -o a.out source_file.m -lobjc -lgnustep-base")
+  `((,(car (cadr (assoc 'c:gcc-mode     play-code-rextester-languages))) . "-Wall -std=gnu99 -O2 -o a.out source_file.c")
+    (,(car (cadr (assoc 'c:clang-mode   play-code-rextester-languages))) . "-Wall -std=gnu99 -O2 -o a.out source_file.c")
+    (,(car (cadr (assoc 'c:vc-mode      play-code-rextester-languages))) . "source_file.c -o a.exe")
+    (,(car (cadr (assoc 'c++:gcc-mode   play-code-rextester-languages))) . "-Wall -std=c++14 -O2 -o a.out source_file.cpp")
+    (,(car (cadr (assoc 'c++:clang-mode play-code-rextester-languages))) . "-Wall -std=c++14 -stdlib=libc++ -O2 -o a.out source_file.cpp")
+    (,(car (cadr (assoc 'c++:vc++-mode  play-code-rextester-languages))) . "source_file.cpp -o a.exe /EHsc /MD /I C:\\boost_1_60_0 /link /LIBPATH:C:\\boost_1_60_0\\stage\\lib")
+    (,(car (cadr (assoc 'd-mode         play-code-rextester-languages))) . "source_file.d -ofa.out")
+    (,(car (cadr (assoc 'go-mode        play-code-rextester-languages))) . "-o a.out source_file.go")
+    (,(car (cadr (assoc 'haskell-mode   play-code-rextester-languages))) . "-o a.out source_file.hs")
+    (,(car (cadr (assoc 'objc-mode      play-code-rextester-languages))) . "-MMD -MP -DGNUSTEP -DGNUSTEP_BASE_LIBRARY=1 -DGNU_GUI_LIBRARY=1 -DGNU_RUNTIME=1 -DGNUSTEP_BASE_LIBRARY=1 -fno-strict-aliasing -fexceptions -fobjc-exceptions -D_NATIVE_OBJC_EXCEPTIONS -pthread -fPIC -Wall -DGSWARN -DGSDIAGNOSE -Wno-import -g -O2 -fgnu-runtime -fconstant-string-class=NSConstantString -I. -I /usr/include/GNUstep -I/usr/include/GNUstep -o a.out source_file.m -lobjc -lgnustep-base")
     ))
 
 (defconst play-code-labstack-languages
