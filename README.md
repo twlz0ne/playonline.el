@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/twlz0ne/play-code.el.svg?branch=master)](https://travis-ci.com/twlz0ne/play-code.el)
+
 # play-code.el
 
 Play code with online playgrounds.
