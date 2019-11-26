@@ -5,7 +5,7 @@
 ;; Author: Gong Qijian <gongqijian@gmail.com>
 ;; Created: 2019/10/11
 ;; Version: 0.1.0
-;; Package-Requires: ((emacs "24.4") (json "1.2") (dash "2.1"))
+;; Package-Requires: ((emacs "24.4") (json "1.2") (dash "2.1") (request "0.2"))
 ;; URL: https://github.com/twlz0ne/play-code.el
 ;; Keywords: tools
 
@@ -38,6 +38,7 @@
 (require 'url-http)
 (require 'json)
 (require 'dash)
+(require 'request)
 
 (defvar org-babel-src-block-regexp)
 (declare-function org-src--get-lang-mode "org")
@@ -194,112 +195,99 @@
 
 (defun play-code-send-to-go-playground (_ code)
   "Send CODE to `play.golang.org', return the execution result."
-  (let* ((url-request-method "POST")
-         (url-request-extra-headers
-           `(("content-type"    . "application/x-www-form-urlencoded; charset=UTF-8")
+  (funcall play-code-http-send-fn "https://play.golang.org/compile"
+           :headers
+           '(("content-type"    . "application/x-www-form-urlencoded; charset=UTF-8")
              ("accept"          . "application/json, text/javascript, */*; q=0.01")
-             ("accept-encoding" . "gzip")))
-         (url-request-data
+             ("accept-encoding" . "gzip"))
+           :data
            (concat "version=2&body="
                    (url-hexify-string code)
-                   "&withVet=true"))
-         (content-buf (url-retrieve-synchronously
-                       "https://play.golang.org/compile")))
-    ;; (message "==> url-request-data:\n%s" url-request-data)
-    (play-code--handle-json-response
-     content-buf
-     (lambda (resp)
-       ;; (message "==> resp object:\n%S" resp)
-       (let ((errors (assoc-default 'Errors resp)))
-         (if (string= errors "")
-             (assoc-default 'Message (aref (assoc-default 'Events resp) 0))
-           errors))))))
+                   "&withVet=true")
+           :response-fn
+           (lambda (resp)
+             (let ((errors (assoc-default 'Errors resp)))
+               (if (string= errors "")
+                   (assoc-default 'Message (aref (assoc-default 'Events resp) 0))
+                 errors)))))
 
 (defun play-code-send-to-rust-playground (channel-id code)
   "Send CODE to `play.rust-lang.org', return the execution result."
-  (let* ((url-request-method "POST")
-         (url-request-extra-headers
-           '(("content-type"     . "application/json;charset=UTF-8")
-             ("accept"           . "application/json")
-             ("accept-encoding"  . "gzip")))
-         (url-request-data (encode-coding-string
-                            (json-encode-plist
-                             `(:channel ,channel-id
-                               :mode "debug"
-                               :edition "2018"
-                               :crateType "bin"
-                               :tests :json-false
-                               :code ,code
-                               :backtrace :json-false))
-                            'utf-8))
-         (content-buf (url-retrieve-synchronously
-                       "https://play.rust-lang.org/execute")))
-    (play-code--handle-json-response
-     content-buf
-     (lambda (resp)
-       (if (eq :json-false (assoc-default 'success resp))
-           (assoc-default 'stderr resp)
-         (assoc-default 'stdout resp))))))
+
+  (funcall play-code-http-send-fn "https://play.rust-lang.org/execute"
+           :headers
+           '(("content-type"    . "application/json;charset=UTF-8")
+             ("accept"          . "application/json")
+             ("accept-encoding" . "gzip"))
+           :data
+           (encode-coding-string
+            (json-encode-plist
+             `(:channel ,channel-id
+               :mode "debug"
+               :edition "2018"
+               :crateType "bin"
+               :tests :json-false
+               :code ,code
+               :backtrace :json-false))
+            'utf-8)
+           :response-fn
+           (lambda (resp)
+             (if (eq :json-false (assoc-default 'success resp))
+                 (assoc-default 'stderr resp)
+               (assoc-default 'stdout resp)))))
 
 (defun play-code-send-to-rextester (lang-id code)
   "Send CODE to `rextester.com', return the execution result.
 LANG-ID to specific the language."
-  (let* ((compiler-args (assoc-default lang-id play-code-rextester-compiler-args))
-         (url-request-method "POST")
-         (url-request-extra-headers
-           `(("content-type"    . "application/x-www-form-urlencoded; charset=UTF-8")
+  (funcall play-code-http-send-fn "https://rextester.com/rundotnet/run"
+           :headers
+           '(("content-type"    . "application/x-www-form-urlencoded; charset=UTF-8")
              ("accept"          . "text/plain, */*; q=0.01")
-             ("accept-encoding" . "gzip")))
-         (url-request-data
-           (concat "LanguageChoiceWrapper="
-                   lang-id
-                   "&EditorChoiceWrapper=1&LayoutChoiceWrapper=1&Program="
-                   (url-hexify-string code)
-                   "&CompilerArgs="
-                   (when compiler-args (url-hexify-string compiler-args))
-                   "&IsInEditMode=False&IsLive=False"))
-         (content-buf (url-retrieve-synchronously
-                       "https://rextester.com/rundotnet/run")))
-    ;; (message "==> url-request-data:\n%s" url-request-data)
-    (play-code--handle-json-response
-     content-buf
-     (lambda (resp)
-       ;; (message "==> resp object:\n%S" resp)
-       (let* ((warnings (assoc-default 'Warnings resp))
+             ("accept-encoding" . "gzip"))
+           :data
+           (let ((compiler-args (assoc-default lang-id play-code-rextester-compiler-args)))
+             (concat "LanguageChoiceWrapper="
+                     lang-id
+                     "&EditorChoiceWrapper=1&LayoutChoiceWrapper=1&Program="
+                     (url-hexify-string code)
+                     "&CompilerArgs="
+                     (when compiler-args (url-hexify-string compiler-args))
+                     "&IsInEditMode=False&IsLive=False"))
+           :response-fn
+           (lambda (resp)
+             (let* ((warnings (assoc-default 'Warnings resp))
               (errors (assoc-default 'Errors resp))
               (result (assoc-default 'Result resp)))
          (concat (unless (eq warnings :null) warnings)
                  (unless (eq errors :null) errors)
-                 (unless (eq result :null) result)))))))
+                 (unless (eq result :null) result))))))
 
 (defun play-code-send-to-labstack (lang-id code)
   "Send CODE to `code.labstack.com', return the execution result.
 LANG-ID to specific the language."
-  (let* ((name (capitalize lang-id))
-         (url-request-method "POST")
-         (url-request-extra-headers
-           '(("content-type"     . "application/json;charset=UTF-8")
-             ("accept"           . "application/json, text/plain, */*")
-             ("accept-encoding"  . "gzip")))
-         (url-request-data (encode-coding-string
-                            (json-encode-plist
-                             `(:notes ""
-                               :language (:id ,(format "%s" lang-id)
-                                          :name ,(format "%s" name)
-                                          :version ""
-                                          :code ,code
-                                          :text ,(format "%s (<version>)" name))
-                               :content ,code))
-                            'utf-8))
-         (content-buf (url-retrieve-synchronously
-                       "https://code.labstack.com/api/v1/run")))
-    (play-code--handle-json-response
-     content-buf
-     (lambda (resp)
-       (if (assoc-default 'code resp)
-           (assoc-default 'message resp)
-         (concat (assoc-default 'stdout resp)
-                 (assoc-default 'stderr resp)))))))
+  (funcall play-code-http-send-fn "https://code.labstack.com/api/v1/run"
+           :headers
+           '(("content-type"    . "application/json;charset=UTF-8")
+             ("accept"          . "application/json, text/plain, */*")
+             ("accept-encoding" . "gzip"))
+           :data
+           (let ((name (capitalize lang-id)))
+             (encode-coding-string
+              (json-encode-plist
+               `(:notes ""
+                 :language (:id ,(format "%s" lang-id)
+                            :name ,(format "%s" name)
+                            :version ""
+                            :code ,code
+                            :text ,(format "%s (<version>)" name))
+                 :content ,code))
+              'utf-8))
+           :response-fn
+           (lambda (resp)
+             (if (assoc-default 'code resp)
+                 (assoc-default 'message resp)
+               (concat (assoc-default 'stdout resp)
+                       (assoc-default 'stderr resp))))))
 
 ;;; Wrapper
 
@@ -379,6 +367,35 @@ LANG-ID to specific the language."
   (if (string-match-p "^[ \t]*fn main *(" body)
       body
     (concat "fn main() {\n" body "\n}\n")))
+
+;;; HTTP functions
+
+(defconst play-code-http-send-fn
+  (if (executable-find "curl")
+      #'play-code-request-send
+    #'play-code-url-send))
+
+(cl-defun play-code-url-send (url &key (method "POST") headers data response-fn &allow-other-keys)
+  (let* ((url-request-method method)
+         (url-request-extra-headers headers)
+         (url-request-data data)
+         (content-buf (url-retrieve-synchronously url)))
+    (play-code--handle-json-response content-buf
+                                     response-fn)))
+
+(cl-defun play-code-request-send (url &key (method "POST") headers data response-fn &allow-other-keys)
+  (let ((response
+         (request url
+                  :type method
+                  :headers headers
+                  :data data
+                  :sync t
+                  :parser #'buffer-string)))
+    (let ((response-code (request-response-status-code response))
+          (response-body (request-response-data response)))
+      (if (= response-code 200)
+          (funcall response-fn (json-read-from-string response-body))
+        (error "Http response error: %s" response-body)))))
 
 ;;;
 

@@ -56,7 +56,7 @@ This function can be applied to:
         (when (memq sender (bound-and-true-p with-proxy-senders))
           (setq sender (let ((orig-sender sender))
                          (lambda (&rest args)
-                           (with-proxy-url
+                           (with-proxy
                              (apply orig-sender args))))))
         ;; }}}+++
         (funcall sender lang (if wrapper
