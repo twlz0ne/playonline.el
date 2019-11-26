@@ -41,10 +41,8 @@
 (require 'request)
 
 (defvar org-babel-src-block-regexp)
-(declare-function org-src--get-lang-mode "org")
 (declare-function org-element-at-point "org")
 (declare-function org-element-property "org")
-(declare-function org-babel-where-is-src-block-head "org")
 (declare-function markdown-code-block-lang "markdown-mode")
 (declare-function markdown-get-lang-mode "markdown-mode")
 (declare-function markdown-get-enclosing-fenced-block-construct "markdown-mode")
@@ -67,8 +65,8 @@
 ;;; playgrounds
 
 (defconst play-code-ground-alist
-  '((play-code-go-playground   . play-code-send-to-go-playground)
-    (play-code-rust-playground . play-code-send-to-rust-playground)
+  '((play-code-go-playground       . play-code-send-to-go-playground)
+    (play-code-rust-playground     . play-code-send-to-rust-playground)
     (play-code-rextester-languages . play-code-send-to-rextester)
     (play-code-labstack-languages  . play-code-send-to-labstack)))
 
@@ -399,6 +397,10 @@ LANG-ID to specific the language."
 
 ;;;
 
+(defmacro play-code--fbound-and-true-p (fun)
+  "Return the symbol FUN if it is bound, else nil."
+  `(and (fboundp ,fun) ,fun))
+
 (defun play-code--pop-to-buffer (buf)
   "Display buffer specified by BUF and select its window."
   (let ((win (selected-window)))
@@ -457,13 +459,13 @@ The alias naming in the form of `foo:<specifier>-mode' to
 opposite a certain version of lang in `play-code-xxx-languags'."
   (let ((mode (or mode major-mode)))
     (pcase mode
-      ('python-mode
+      (`python-mode
        (pcase (list (play-code--get-shebang-command)
                     (file-name-extension (or (buffer-file-name) (buffer-name))))
          ((or `("python3" ,_) `(,_ "py3")) 'python:3-mode)
          ((or `("python2" ,_) `(,_ "py2")) 'python:2-mode)
          (_ mode)))
-      ((or 'js-mode 'js2-mode 'javascript-mode)
+      ((or `js-mode `js2-mode `javascript-mode)
        (if (play-code--nodejs-p) 'js:node-mode mode))
       (_ mode))))
 
@@ -502,12 +504,14 @@ opposite a certain version of lang in `play-code-xxx-languags'."
   "Return orgmode src block in the form of (mode code bounds)."
   (require 'org)
   (-if-let* ((src-element (org-element-at-point)))
-      (list (org-src--get-lang-mode (org-element-property :language src-element))
+      (list (funcall (or (play-code--fbound-and-true-p 'org-src--get-lang-mode)
+                                     (play-code--fbound-and-true-p 'org-src-get-lang-mode))
+                                 (org-element-property :language src-element))
             (if (region-active-p)
-                (buffer-substring-no-properties beg end)
-              (org-element-property :value src-element))
+                       (buffer-substring-no-properties beg end)
+                     (org-element-property :value src-element))
             (save-excursion
-              (goto-char (org-babel-where-is-src-block-head src-element))
+              (goto-char (plist-get (cadr src-element) :begin))
               (looking-at org-babel-src-block-regexp)
               (list (match-beginning 5) (match-end 5))))))
 
