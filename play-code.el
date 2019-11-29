@@ -4,7 +4,7 @@
 
 ;; Author: Gong Qijian <gongqijian@gmail.com>
 ;; Created: 2019/10/11
-;; Version: 0.1.0
+;; Version: 0.1.2
 ;; Package-Requires: ((emacs "24.4") (json "1.2") (dash "2.1") (request "0.2"))
 ;; URL: https://github.com/twlz0ne/play-code.el
 ;; Keywords: tools
@@ -30,7 +30,8 @@
 ;;; Change Log:
 
 ;;  0.1.0  2019/10/11  Initial version.
-;;  0.1.1  2019/10/31  Add `play-code', delete `play-code{buffer,region,block}'
+;;  0.1.1  2019/10/31  Add `play-code', delete `play-code{buffer,region,block}'.
+;;  0.1.2  2019/11/29  Add request.el as an alternative http library.
 
 ;;; Code:
 
