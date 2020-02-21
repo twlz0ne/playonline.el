@@ -87,7 +87,7 @@
     (c:gcc-mode        . (("6"  . "C (gcc)")))
     (c:clang-mode      . (("26" . "C (clang)")))
     (c:vc-mode         . (("29" . "C (vc)")))
-    (common-lisp-mode  . (("18" . "Common Lisp")))
+    (lisp-mode         . (("18" . "Common Lisp")))
     (c++-mode          . (("27" . "C++ (clang)")
                           ("7"  . "C++ (gcc)")
                           ("28" . "C++ (vc++)")))
