@@ -71,15 +71,16 @@
       #'playonline-request-send
     #'playonline-url-send))
 
-(cl-defun playonline-url-send (url &key (method "POST") headers data response-fn &allow-other-keys)
+(cl-defun playonline-url-send (url &key (method "POST") headers data response-prepfn response-fn &allow-other-keys)
   (let* ((url-request-method method)
          (url-request-extra-headers headers)
          (url-request-data data)
          (content-buf (url-retrieve-synchronously url)))
     (playonline--handle-json-response content-buf
+                                      response-prepfn
                                       response-fn)))
 
-(cl-defun playonline-request-send (url &key (method "POST") headers data response-fn &allow-other-keys)
+(cl-defun playonline-request-send (url &key (method "POST") headers data response-prepfn response-fn &allow-other-keys)
   (let ((response
          (request url
            :type method
@@ -90,7 +91,10 @@
     (let ((response-code (request-response-status-code response))
           (response-body (request-response-data response)))
       (if (= response-code 200)
-          (funcall response-fn (json-read-from-string response-body))
+          (funcall response-fn (json-read-from-string
+                                (if response-prepfn
+                                    (funcall response-prepfn response-body)
+                                  response-body)))
         (error "Http response error: %s" response-body)))))
 
 ;;; playgrounds
@@ -429,8 +433,9 @@ LANG-ID to specific the language."
     (unless playonline-focus-p
       (select-window win))))
 
-(defun playonline--handle-json-response (url-content-buf callback)
+(defun playonline--handle-json-response (url-content-buf prepfn callback)
   "Handle json response in URL-CONTENT-BUF.
+Function PREPFN is used to process the http-body before converting to json.
 Function CALLBACK accept an alist, and return output string."
   (with-current-buffer url-content-buf
     (let ((http-code (save-excursion (url-http-parse-response)))
@@ -440,7 +445,8 @@ Function CALLBACK accept an alist, and return output string."
       ;; (message "==> http code:\n%s" http-code)
       ;; (message "==> http body:\n%s" http-body)
       (pcase http-code
-        (200 (let* ((resp (json-read-from-string http-body))
+        (200 (let* ((resp (json-read-from-string
+                           (if prepfn (funcall prepfn http-body) http-body)))
                     (output (funcall callback resp))
                     (output-buf (get-buffer-create playonline-buffer-name)))
                (cond (playonline-output-to-buffer-p
