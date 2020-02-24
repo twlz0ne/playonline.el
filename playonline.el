@@ -35,6 +35,7 @@
 
 ;;; Code:
 
+(require 'cl-lib)
 (require 'url-util)
 (require 'url-http)
 (require 'json)
@@ -94,134 +95,154 @@
 
 ;;; playgrounds
 
-(defconst playonline-ground-alist
-  '((playonline-go-playground       . playonline-send-to-go-playground)
-    (playonline-rust-playground     . playonline-send-to-rust-playground)
-    (playonline-rextester-languages . playonline-send-to-rextester)
-    (playonline-labstack-languages  . playonline-send-to-labstack)))
+(defvar playonline-ground-alist '())
 
-(defconst playonline-go-playground
-  '((go-mode . (("go" . "Go")))))
+(cl-defstruct playonline-playground
+  id url sendfn languages compiler-args)
 
-(defconst playonline-rust-playground
-  '((rust-mode . (("stable" . "Rust (stable)")))))
+(cl-defmacro playonline-define-playground (id &key url sendfn languages compiler-args &allow-other-keys)
+  (declare (indent defun) (debug t))
+  `(let* ((instance (make-playonline-playground
+                     :id            ',id
+                     :url           ',url
+                     :sendfn        ',sendfn
+                     :languages     ',languages
+                     :compiler-args ',compiler-args))
+          (existing (assoc ',id playonline-ground-alist)))
+     (if existing
+         (setf (cdr existing) instance)
+       (add-to-list 'playonline-ground-alist (cons ',id instance)))))
 
-(defconst playonline-rextester-languages
-  '((ada-mode          . (("39" . "Ada")))
-    (bash-mode         . (("38" . "Bash")))
-    (brainfuck-mode    . (("44" . "Brainfuck")))
-    (c-mode            . (("26" . "C (clang)")
-                          ("6"  . "C (gcc)")
-                          ("29" . "C (vc)")))
-    (c:gcc-mode        . (("6"  . "C (gcc)")))
-    (c:clang-mode      . (("26" . "C (clang)")))
-    (c:vc-mode         . (("29" . "C (vc)")))
-    (lisp-mode         . (("18" . "Common Lisp")))
-    (c++-mode          . (("27" . "C++ (clang)")
-                          ("7"  . "C++ (gcc)")
-                          ("28" . "C++ (vc++)")))
-    (c++:clang-mode    . (("27" . "C++ (clang)")))
-    (c++:gcc-mode      . (("7"  . "C++ (gcc)")))
-    (c++:vc++-mode     . (("28" . "C++ (vc++)")))
-    (csharp-mode       . (("1"  . "C#")))
-    (d-mode            . (("30" . "D")))
-    (elixir-mode       . (("41" . "Elixir")))
-    (erlang-mode       . (("40" . "Erlang")))
-    (fortran-mode      . (("45"  . "F#")))
-    (fsharp-mode       . (("3" . "Fortran")))
-    (go-mode           . (("20" . "Go")))
-    (haskell-mode      . (("11" . "Haskell")))
-    (java-mode         . (("4"  . "Java")))
-    (javascript-mode   . (("17" . "Javascript")
-                          ("23" . "Node.js")))
-    (js-mode           . javascript-mode)
-    (js2-mode          . javascript-mode)
-    (js:node-mode      . (("23" . "Node.js")))
-    (kotlin-mode       . (("43" . "Kotlin")))
-    (lua-mode          . (("14" . "Lua")))
-    (nasm-mode         . (("15" . "Assembly")))
-    (objc-mode         . (("10" . "Objective-C")))
-    (ocaml-mode        . (("42" . "Ocaml")))
-    (octave-mode       . (("25" . "Octave")))
-    (oracle-mode       . (("35" . "Oracle")))
-    (pascal-mode       . (("9"  . "Pascal")))
-    (perl-mode         . (("13" . "Perl")))
-    (php-mode          . (("8"  . "Php")))
-    (prolog-mode       . (("19" . "Prolog")))
-    (python-mode       . (("24" . "Python 3")
-                          ("5"  . "Python")))
-    (python:3-mode     . (("24" . "Python 3")))
-    (python:2-mode     . (("5"  . "Python")))
-    (r-mode            . (("31" . "R")))
-    (ruby-mode         . (("12" . "Ruby")))
-    (scala-mode        . (("21" . "Scala")))
-    (scheme-mode       . (("22" . "Scheme")))
-    (sql-mode          . (("33" . "MySql")
-                          ("34" . "PostgreSQL")
-                          ("16" . "Sql Server")))
-    (swift-mode        . (("37" . "Swift")))
-    (tcl-mode          . (("32" . "Tcl")))
-    (visual-basic-mode . (("2"  . "Visual Basic")))
-    ))
+(playonline-define-playground labstack
+  :url "https://code.labstack.com"
+  :sendfn playonline-send-to-labstack
+  :languages
+  ((sh-mode           . (("bash"         . "Bash")))
+   (c-mode            . (("c"            . "C")))
+   (clojure-mode      . (("clojure"      . "Clojure")))
+   (coffeescript-mode . (("coffeescript" . "CoffeeScript")))
+   (c++-mode          . (("cpp"          . "C++")))
+   (crystal-mode      . (("crystal"      . "Crystal")))
+   (csharp-mode       . (("csharp"       . "C#")))
+   (d-mode            . (("d"            . "D")))
+   (dart-mode         . (("dart"         . "Dart")))
+   (elixir-mode       . (("elixir"       . "Elixir")))
+   (erlang-mode       . (("erlang"       . "Erlang")))
+   (fsharp-mode       . (("fsharp"       . "F#")))
+   (groovy-mode       . (("groovy"       . "Groovy")))
+   (go-mode           . (("go"           . "Go")))
+   (hack-mode         . (("hack"         . "Hack")))
+   (haskell-mode      . (("haskell"      . "Haskell")))
+   (java-mode         . (("java"         . "Java")))
+   (javascript-mode   . (("javascript"   . "JavaScript")
+                         ("node"         . "Node")))
+   (js-mode           . javascript-mode)
+   (js2-mode          . javascript-mode)
+   (js:node-mode      . (("node"         . "Node")))
+   (julia-mode        . (("julia"        . "Julia")))
+   (kotlin-mode       . (("kotlin"       . "Kotlin")))
+   (lua-mode          . (("lua"          . "Lua")))
+   (nim-mode          . (("nim"          . "Nim")))
+   (objc-mode         . (("objective-c"  . "Objective-C")))
+   (ocaml-mode        . (("ocaml"        . "OCaml")))
+   (octave-mode       . (("octave"       . "Octave")))
+   (perl-mode         . (("perl"         . "Perl")))
+   (php-mode          . (("php"          . "PHP")))
+   (powershell-mode   . (("powershell"   . "PowerShell")))
+   (python:3-mode     . (("python"       . "Python")))
+   (ruby-mode         . (("ruby"         . "Ruby")))
+   (r-mode            . (("r"            . "R")))
+   (reason-mode       . (("reason"       . "Reason")))
+   (rust-mode         . (("rust"         . "Rust")))
+   (scala-mode        . (("scala"        . "Scala")))
+   (swift-mode        . (("swift"        . "Swift")))
+   (tcl-mode          . (("tcl"          . "TCL")))
+   (typescript-mode   . (("typescript"   . "TypeScript")))
+   ))
 
-(defconst playonline-rextester-compiler-args
-  `((,(car (cadr (assoc 'c:gcc-mode     playonline-rextester-languages))) . "-Wall -std=gnu99 -O2 -o a.out source_file.c")
-    (,(car (cadr (assoc 'c:clang-mode   playonline-rextester-languages))) . "-Wall -std=gnu99 -O2 -o a.out source_file.c")
-    (,(car (cadr (assoc 'c:vc-mode      playonline-rextester-languages))) . "source_file.c -o a.exe")
-    (,(car (cadr (assoc 'c++:gcc-mode   playonline-rextester-languages))) . "-Wall -std=c++14 -O2 -o a.out source_file.cpp")
-    (,(car (cadr (assoc 'c++:clang-mode playonline-rextester-languages))) . "-Wall -std=c++14 -stdlib=libc++ -O2 -o a.out source_file.cpp")
-    (,(car (cadr (assoc 'c++:vc++-mode  playonline-rextester-languages))) . "source_file.cpp -o a.exe /EHsc /MD /I C:\\boost_1_60_0 /link /LIBPATH:C:\\boost_1_60_0\\stage\\lib")
-    (,(car (cadr (assoc 'd-mode         playonline-rextester-languages))) . "source_file.d -ofa.out")
-    (,(car (cadr (assoc 'go-mode        playonline-rextester-languages))) . "-o a.out source_file.go")
-    (,(car (cadr (assoc 'haskell-mode   playonline-rextester-languages))) . "-o a.out source_file.hs")
-    (,(car (cadr (assoc 'objc-mode      playonline-rextester-languages))) . "-MMD -MP -DGNUSTEP -DGNUSTEP_BASE_LIBRARY=1 -DGNU_GUI_LIBRARY=1 -DGNU_RUNTIME=1 -DGNUSTEP_BASE_LIBRARY=1 -fno-strict-aliasing -fexceptions -fobjc-exceptions -D_NATIVE_OBJC_EXCEPTIONS -pthread -fPIC -Wall -DGSWARN -DGSDIAGNOSE -Wno-import -g -O2 -fgnu-runtime -fconstant-string-class=NSConstantString -I. -I /usr/include/GNUstep -I/usr/include/GNUstep -o a.out source_file.m -lobjc -lgnustep-base")
-    ))
+(playonline-define-playground rextester
+  :url "https://rextester.com"
+  :sendfn playonline-send-to-rextester
+  :languages
+  ((ada-mode          . (("39" . "Ada")))
+   (bash-mode         . (("38" . "Bash")))
+   (brainfuck-mode    . (("44" . "Brainfuck")))
+   (c-mode            . (("26" . "C (clang)")
+                         ("6"  . "C (gcc)")
+                         ("29" . "C (vc)")))
+   (c:gcc-mode        . (("6"  . "C (gcc)")))
+   (c:clang-mode      . (("26" . "C (clang)")))
+   (c:vc-mode         . (("29" . "C (vc)")))
+   (lisp-mode         . (("18" . "Common Lisp")))
+   (c++-mode          . (("27" . "C++ (clang)")
+                         ("7"  . "C++ (gcc)")
+                         ("28" . "C++ (vc++)")))
+   (c++:clang-mode    . (("27" . "C++ (clang)")))
+   (c++:gcc-mode      . (("7"  . "C++ (gcc)")))
+   (c++:vc++-mode     . (("28" . "C++ (vc++)")))
+   (csharp-mode       . (("1"  . "C#")))
+   (d-mode            . (("30" . "D")))
+   (elixir-mode       . (("41" . "Elixir")))
+   (erlang-mode       . (("40" . "Erlang")))
+   (fortran-mode      . (("45" . "F#")))
+   (fsharp-mode       . (("3"  . "Fortran")))
+   (go-mode           . (("20" . "Go")))
+   (haskell-mode      . (("11" . "Haskell")))
+   (java-mode         . (("4"  . "Java")))
+   (javascript-mode   . (("17" . "Javascript")
+                         ("23" . "Node.js")))
+   (js-mode           . javascript-mode)
+   (js2-mode          . javascript-mode)
+   (js:node-mode      . (("23" . "Node.js")))
+   (kotlin-mode       . (("43" . "Kotlin")))
+   (lua-mode          . (("14" . "Lua")))
+   (nasm-mode         . (("15" . "Assembly")))
+   (objc-mode         . (("10" . "Objective-C")))
+   (ocaml-mode        . (("42" . "Ocaml")))
+   (octave-mode       . (("25" . "Octave")))
+   (oracle-mode       . (("35" . "Oracle")))
+   (pascal-mode       . (("9"  . "Pascal")))
+   (perl-mode         . (("13" . "Perl")))
+   (php-mode          . (("8"  . "Php")))
+   (prolog-mode       . (("19" . "Prolog")))
+   (python-mode       . (("24" . "Python 3")
+                         ("5"  . "Python")))
+   (python:3-mode     . (("24" . "Python 3")))
+   (python:2-mode     . (("5"  . "Python")))
+   (r-mode            . (("31" . "R")))
+   (ruby-mode         . (("12" . "Ruby")))
+   (scala-mode        . (("21" . "Scala")))
+   (scheme-mode       . (("22" . "Scheme")))
+   (sql-mode          . (("33" . "MySql")
+                         ("34" . "PostgreSQL")
+                         ("16" . "Sql Server")))
+   (swift-mode        . (("37" . "Swift")))
+   (tcl-mode          . (("32" . "Tcl")))
+   (visual-basic-mode . (("2"  . "Visual Basic"))))
+  :compiler-args
+  ((c:gcc-mode        . "-Wall -std=gnu99 -O2 -o a.out source_file.c")
+   (c:clang-mode      . "-Wall -std=gnu99 -O2 -o a.out source_file.c")
+   (c:vc-mode         . "source_file.c -o a.exe")
+   (c++:gcc-mode      . "-Wall -std=c++14 -O2 -o a.out source_file.cpp")
+   (c++:clang-mode    . "-Wall -std=c++14 -stdlib=libc++ -O2 -o a.out source_file.cpp")
+   (c++:vc++-mode     . "source_file.cpp -o a.exe /EHsc /MD /I C:\\boost_1_60_0 /link /LIBPATH:C:\\boost_1_60_0\\stage\\lib")
+   (d-mode            . "source_file.d -ofa.out")
+   (go-mode           . "-o a.out source_file.go")
+   (haskell-mode      . "-o a.out source_file.hs")
+   (objc-mode         . "-MMD -MP -DGNUSTEP -DGNUSTEP_BASE_LIBRARY=1 -DGNU_GUI_LIBRARY=1 -DGNU_RUNTIME=1 -DGNUSTEP_BASE_LIBRARY=1 -fno-strict-aliasing -fexceptions -fobjc-exceptions -D_NATIVE_OBJC_EXCEPTIONS -pthread -fPIC -Wall -DGSWARN -DGSDIAGNOSE -Wno-import -g -O2 -fgnu-runtime -fconstant-string-class=NSConstantString -I. -I /usr/include/GNUstep -I/usr/include/GNUstep -o a.out source_file.m -lobjc -lgnustep-base")))
 
-(defconst playonline-labstack-languages
-  '((sh-mode           . (("bash"         . "Bash")))
-    (c-mode            . (("c"            . "C")))
-    (clojure-mode      . (("clojure"      . "Clojure")))
-    (coffeescript-mode . (("coffeescript" . "CoffeeScript")))
-    (c++-mode          . (("cpp"          . "C++")))
-    (crystal-mode      . (("crystal"      . "Crystal")))
-    (csharp-mode       . (("csharp"       . "C#")))
-    (d-mode            . (("d"            . "D")))
-    (dart-mode         . (("dart"         . "Dart")))
-    (elixir-mode       . (("elixir"       . "Elixir")))
-    (erlang-mode       . (("erlang"       . "Erlang")))
-    (fsharp-mode       . (("fsharp"       . "F#")))
-    (groovy-mode       . (("groovy"       . "Groovy")))
-    (go-mode           . (("go"           . "Go")))
-    (hack-mode         . (("hack"         . "Hack")))
-    (haskell-mode      . (("haskell"      . "Haskell")))
-    (java-mode         . (("java"         . "Java")))
-    (javascript-mode   . (("javascript"   . "JavaScript")
-                          ("node"         . "Node")))
-    (js-mode           . javascript-mode)
-    (js2-mode          . javascript-mode)
-    (js:node-mode      . (("node"         . "Node")))
-    (julia-mode        . (("julia"        . "Julia")))
-    (kotlin-mode       . (("kotlin"       . "Kotlin")))
-    (lua-mode          . (("lua"          . "Lua")))
-    (nim-mode          . (("nim"          . "Nim")))
-    (objc-mode         . (("objective-c"  . "Objective-C")))
-    (ocaml-mode        . (("ocaml"        . "OCaml")))
-    (octave-mode       . (("octave"       . "Octave")))
-    (perl-mode         . (("perl"         . "Perl")))
-    (php-mode          . (("php"          . "PHP")))
-    (powershell-mode   . (("powershell"   . "PowerShell")))
-    (python:3-mode     . (("python"       . "Python")))
-    (ruby-mode         . (("ruby"         . "Ruby")))
-    (r-mode            . (("r"            . "R")))
-    (reason-mode       . (("reason"       . "Reason")))
-    (rust-mode         . (("rust"         . "Rust")))
-    (scala-mode        . (("scala"        . "Scala")))
-    (swift-mode        . (("swift"        . "Swift")))
-    (tcl-mode          . (("tcl"          . "TCL")))
-    (typescript-mode   . (("typescript"   . "TypeScript")))
-    ))
+(playonline-define-playground rust
+  :url "https://play.rust-lang.org"
+  :sendfn playonline-send-to-rust-playground
+  :languages
+  ((rust-mode . (("stable" . "Rust (stable)")))))
 
-(defun playonline-send-to-go-playground (_ code)
+(playonline-define-playground go
+  :url "https://play.golang.org"
+  :sendfn playonline-send-to-go-playground
+  :languages
+  ((go-mode . (("go" . "Go")))))
+(defun playonline-send-to-go-playground (_ code &optional _compiler-arg)
   "Send CODE to `play.golang.org', return the execution result."
   (funcall playonline-http-send-fn "https://play.golang.org/compile"
            :headers
@@ -239,7 +260,7 @@
                    (assoc-default 'Message (aref (assoc-default 'Events resp) 0))
                  errors)))))
 
-(defun playonline-send-to-rust-playground (channel-id code)
+(defun playonline-send-to-rust-playground (channel-id code &optional _compiler-arg)
   "Send CODE to `play.rust-lang.org', return the execution result."
 
   (funcall playonline-http-send-fn "https://play.rust-lang.org/execute"
@@ -264,7 +285,7 @@
                  (assoc-default 'stderr resp)
                (assoc-default 'stdout resp)))))
 
-(defun playonline-send-to-rextester (lang-id code)
+(defun playonline-send-to-rextester (lang-id code &optional compiler-arg)
   "Send CODE to `rextester.com', return the execution result.
 LANG-ID to specific the language."
   (funcall playonline-http-send-fn "https://rextester.com/rundotnet/run"
@@ -273,14 +294,13 @@ LANG-ID to specific the language."
              ("accept"          . "text/plain, */*; q=0.01")
              ("accept-encoding" . "gzip"))
            :data
-           (let ((compiler-args (assoc-default lang-id playonline-rextester-compiler-args)))
-             (concat "LanguageChoiceWrapper="
-                     lang-id
-                     "&EditorChoiceWrapper=1&LayoutChoiceWrapper=1&Program="
-                     (url-hexify-string code)
-                     "&CompilerArgs="
-                     (when compiler-args (url-hexify-string compiler-args))
-                     "&IsInEditMode=False&IsLive=False"))
+           (concat "LanguageChoiceWrapper="
+                   lang-id
+                   "&EditorChoiceWrapper=1&LayoutChoiceWrapper=1&Program="
+                   (url-hexify-string code)
+                   "&CompilerArgs="
+                   (when compiler-arg (url-hexify-string compiler-arg))
+                   "&IsInEditMode=False&IsLive=False")
            :response-fn
            (lambda (resp)
              (let* ((warnings (assoc-default 'Warnings resp))
@@ -290,7 +310,7 @@ LANG-ID to specific the language."
                        (unless (eq errors :null) errors)
                        (unless (eq result :null) result))))))
 
-(defun playonline-send-to-labstack (lang-id code)
+(defun playonline-send-to-labstack (lang-id code &optional _compiler-arg)
   "Send CODE to `code.labstack.com', return the execution result.
 LANG-ID to specific the language."
   (funcall playonline-http-send-fn "https://code.labstack.com/api/v1/run"
@@ -471,35 +491,43 @@ opposite a certain version of lang in `playonline-xxx-languags'."
       (_ mode))))
 
 (defun playonline--get-ground (mode)
-  "Return (((lang-id . lang-name) ...) . send-function) for MODE."
+  "Return (language-def send-function compiler-args) for MODE."
   (catch 'break
     (mapc
-     (lambda (ground)
-       (let ((lang (assoc mode (symbol-value (car ground)))))
-         (let ((symbol (cdr lang)))
-           (when (symbolp symbol)
-             (setq lang (assoc symbol (symbol-value (car ground))))))
-         (when lang
-           (throw 'break (cons (cdr lang) (cdr ground))))))
+     (-lambda ((_id . ground))
+       (-if-let*
+           ((lang-alist (playonline-playground-languages ground))
+            (lang-def (let ((def (assoc mode lang-alist)))
+                        (if (symbolp (cdr def))
+                            (assoc (cdr def) lang-alist)
+                          def))))
+           (throw 'break
+                  (list
+                   (cdr lang-def)
+                   (playonline-playground-sendfn ground)
+                   ;; `compiler-args' is definded in form of `((mode . args) ...)'
+                   ;; now needs to be converted to `((lang-id . args) ...)'
+                   (--map (cons (cl-caadr (assoc (car it) lang-alist)) (cdr it))
+                          (playonline-playground-compiler-args ground))))))
      playonline-ground-alist)
     nil))
 
 (defun playonline--get-lang-and-function (mode)
-  "Return (lang sender wrapper) for MODE."
+  "Return (lang sender wrapper compiler-args) for MODE."
   (pcase-let*
-      ((`(,langs . ,sender) (playonline--get-ground mode))
+      ((`(,lang-def ,sender ,compiler-args) (playonline--get-ground mode))
        (`(,lang . ,_desc)
-        (cond ((> (length langs) 1)
+        (cond ((> (length lang-def) 1)
                (rassoc
-                (completing-read "Choose: " (mapcar (lambda (it) (cdr it)) langs))
-                langs))
-              (t (car langs))))
+                (completing-read "Choose: " (mapcar (lambda (it) (cdr it)) lang-def))
+                lang-def))
+              (t (car lang-def))))
        (`(,_mode . ,wrapper) (assoc mode playonline-main-wrap-functions)))
     ;; (message "==> lang: %s, sender: %s, wrapper: %s" lang sender wrapper)
     (when (or (not lang)
               (not sender))
-      (error "No lang-id or sender found"))
-    (list lang sender wrapper)))
+      (error (format "No lang-id or sender found for %s" mode)))
+    (list lang sender wrapper (assoc-default lang compiler-args))))
 
 (defun playonline-orgmode-src-block (&optional beg end)
   "Return orgmode src block in the form of (mode code bounds)."
@@ -554,7 +582,7 @@ This function can be applied to:
                        (buffer-substring-no-properties beg end)
                      (buffer-substring-no-properties (point-min) (point-max)))
                    nil))))
-       (`(,lang ,sender ,wrapper)
+       (`(,lang ,sender ,wrapper ,compiler-arg)
         (playonline--get-lang-and-function
          (save-restriction
            (when bounds
@@ -562,7 +590,8 @@ This function can be applied to:
            (playonline--get-mode-alias mode)))))
     (funcall sender lang (if wrapper
                              (funcall wrapper code)
-                           code))))
+                           code)
+             compiler-arg)))
 
 (provide 'playonline)
 

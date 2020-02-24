@@ -29,9 +29,10 @@
   (transient-mark-mode))
 
 (cl-defun --with-code-buffer
-    (&key ground code mode choose expect expect-fn &allow-other-keys)
+    (&key grounds code mode choose expect expect-fn &allow-other-keys)
   (let ((playonline-output-to-buffer-p nil)
-        (playonline-ground-alist (or ground playonline-ground-alist))
+        (playonline-ground-alist (or (--map (assoc it playonline-ground-alist) grounds)
+                                     playonline-ground-alist))
         (buf (generate-new-buffer "*test*")))
     (with-current-buffer buf
       (unless (fboundp mode)
@@ -149,14 +150,14 @@
 
 (ert-deftest playonline-test-c-code/labstack ()
   (--with-code-buffer
-   :ground '((playonline-labstack-languages . playonline-send-to-labstack))
+   :grounds '(labstack)
    :mode   'c-mode
    :code   "printf(\"Hello, C!\\n\");"
    :expect "Hello, C!\n"))
 
 (ert-deftest playonline-test-cpp-code/labstack ()
   (--with-code-buffer
-   :ground '((playonline-labstack-languages . playonline-send-to-labstack))
+   :grounds '(labstack)
    :mode   'c++-mode
    :code   "std::cout << \"Hello, CPP(Gcc)\\n\";"
    :expect "Hello, CPP(Gcc)\n"
@@ -164,7 +165,7 @@
 
 (ert-deftest playonline-test-c@clang-code ()
   (--with-code-buffer
-   :ground '((playonline-rextester-languages . playonline-send-to-rextester))
+   :grounds '(rextester)
    :mode   'c-mode
    :choose 'c:clang-mode
    :code   "printf(\"Hello, C(Clang)!\\n\");"
@@ -172,7 +173,7 @@
 
 (ert-deftest playonline-test-c@gcc-code ()
   (--with-code-buffer
-   :ground '((playonline-rextester-languages . playonline-send-to-rextester))
+   :grounds '(rextester)
    :mode   'c-mode
    :choose 'c:gcc-mode
    :code   "printf(\"Hello, C(Gcc)!\\n\");"
@@ -180,7 +181,7 @@
 
 (ert-deftest playonline-test-c@vc-code ()
   (--with-code-buffer
-   :ground '((playonline-rextester-languages . playonline-send-to-rextester))
+   :grounds '(rextester)
    :mode   'c-mode
    :choose 'c:vc-mode
    :code   "printf(\"Hello, C(VC)!\\n\");"
@@ -188,7 +189,7 @@
 
 (ert-deftest playonline-test-cpp@gcc-code ()
   (--with-code-buffer
-   :ground '((playonline-rextester-languages . playonline-send-to-rextester))
+   :grounds '(rextester)
    :mode   'c++-mode
    :choose 'c++:gcc-mode
    :code   "std::cout << \"Hello, C++(GCC)!\\n\";"
@@ -196,7 +197,7 @@
 
 (ert-deftest playonline-test-cpp@clang-code ()
   (--with-code-buffer
-   :ground '((playonline-rextester-languages . playonline-send-to-rextester))
+   :grounds '(rextester)
    :mode   'c++-mode
    :choose 'c++:clang-mode
    :code   "std::cout << \"Hello, C++(Clang)!\\n\";"
@@ -204,7 +205,7 @@
 
 (ert-deftest playonline-test-cpp@vcpp-code ()
   (--with-code-buffer
-   :ground '((playonline-rextester-languages . playonline-send-to-rextester))
+   :grounds '(rextester)
    :mode   'c++-mode
    :choose 'c++:vc++-mode
    :code   "std::cout << \"Hello, C++(VC++)!\\n\";"
@@ -218,20 +219,20 @@
    :expect "Hello, Go\n")
   ;; rextester
   (--with-code-buffer
-   :ground '((playonline-rextester-languages . playonline-send-to-rextester))
+   :grounds '(rextester)
    :mode 'go-mode
    :code "fmt.Println(\"Hello, Go\")"
    :expect "Hello, Go\n")
   ;; labstack
   (--with-code-buffer
-   :ground '((playonline-labstack-languages . playonline-send-to-labstack))
+   :grounds '(labstack)
    :mode 'go-mode
    :code "fmt.Println(\"Hello, Go\")"
    :expect "Hello, Go\n"))
 
 (ert-deftest playonline-test-python3-code ()
   (--with-code-buffer
-   :ground '((playonline-labstack-languages . playonline-send-to-labstack))
+   :grounds '(labstack)
    :mode 'python-mode
    :choose 'python:3-mode
    :code "print('Hello, Python3')"
@@ -244,7 +245,7 @@
       (should (eq func 'playonline-send-to-rust-playground))
       (should (string= "Hello, Rust\n"
                        (funcall func lang code))))
-    (let ((playonline-ground-alist '((playonline-labstack-languages . playonline-send-to-labstack))))
+    (let ((playonline-ground-alist `(,(assoc 'labstack playonline-ground-alist))))
       (pcase-let ((`(,lang ,func) (playonline--get-lang-and-function 'rust-mode)))
         (should (eq func 'playonline-send-to-labstack))
         (should (string= "Hello, Rust\n"
