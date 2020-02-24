@@ -63,6 +63,35 @@
   :type 'boolean
   :group 'playonline)
 
+;;; HTTP functions
+
+(defconst playonline-http-send-fn
+  (if (executable-find "curl")
+      #'playonline-request-send
+    #'playonline-url-send))
+
+(cl-defun playonline-url-send (url &key (method "POST") headers data response-fn &allow-other-keys)
+  (let* ((url-request-method method)
+         (url-request-extra-headers headers)
+         (url-request-data data)
+         (content-buf (url-retrieve-synchronously url)))
+    (playonline--handle-json-response content-buf
+                                      response-fn)))
+
+(cl-defun playonline-request-send (url &key (method "POST") headers data response-fn &allow-other-keys)
+  (let ((response
+         (request url
+           :type method
+           :headers headers
+           :data data
+           :sync t
+           :parser #'buffer-string)))
+    (let ((response-code (request-response-status-code response))
+          (response-body (request-response-data response)))
+      (if (= response-code 200)
+          (funcall response-fn (json-read-from-string response-body))
+        (error "Http response error: %s" response-body)))))
+
 ;;; playgrounds
 
 (defconst playonline-ground-alist
@@ -366,35 +395,6 @@ LANG-ID to specific the language."
   (if (string-match-p "^[ \t]*fn main *(" body)
       body
     (concat "fn main() {\n" body "\n}\n")))
-
-;;; HTTP functions
-
-(defconst playonline-http-send-fn
-  (if (executable-find "curl")
-      #'playonline-request-send
-    #'playonline-url-send))
-
-(cl-defun playonline-url-send (url &key (method "POST") headers data response-fn &allow-other-keys)
-  (let* ((url-request-method method)
-         (url-request-extra-headers headers)
-         (url-request-data data)
-         (content-buf (url-retrieve-synchronously url)))
-    (playonline--handle-json-response content-buf
-                                      response-fn)))
-
-(cl-defun playonline-request-send (url &key (method "POST") headers data response-fn &allow-other-keys)
-  (let ((response
-         (request url
-           :type method
-           :headers headers
-           :data data
-           :sync t
-           :parser #'buffer-string)))
-    (let ((response-code (request-response-status-code response))
-          (response-body (request-response-data response)))
-      (if (= response-code 200)
-          (funcall response-fn (json-read-from-string response-body))
-        (error "Http response error: %s" response-body)))))
 
 ;;;
 
