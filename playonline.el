@@ -1,4 +1,4 @@
-;;; play-code.el --- Play code with online playgrounds -*- lexical-binding: t; -*-
+;;; playonline.el --- Play code with online playgrounds -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2019 Gong Qijian <gongqijian@gmail.com>
 
@@ -6,7 +6,7 @@
 ;; Created: 2019/10/11
 ;; Version: 0.1.2
 ;; Package-Requires: ((emacs "24.4") (json "1.2") (dash "2.1") (request "0.2"))
-;; URL: https://github.com/twlz0ne/play-code.el
+;; URL: https://github.com/twlz0ne/playonline.el
 ;; Keywords: tools
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -30,7 +30,7 @@
 ;;; Change Log:
 
 ;;  0.1.0  2019/10/11  Initial version.
-;;  0.1.1  2019/10/31  Add `play-code', delete `play-code{buffer,region,block}'.
+;;  0.1.1  2019/10/31  Add `playonline', delete `playonline{buffer,region,block}'.
 ;;  0.1.2  2019/11/29  Add request.el as an alternative http library.
 
 ;;; Code:
@@ -48,36 +48,36 @@
 (declare-function markdown-get-lang-mode "markdown-mode")
 (declare-function markdown-get-enclosing-fenced-block-construct "markdown-mode")
 
-(defcustom play-code-buffer-name "*play-code*"
+(defcustom playonline-buffer-name "*playonline*"
   "The name of the buffer to show output."
   :type 'string
-  :group 'play-code)
+  :group 'playonline)
 
-(defcustom play-code-focus-p t
+(defcustom playonline-focus-p t
   "Whether to move focus to output buffer after `url-retrieve' responsed."
   :type 'boolean
-  :group 'play-code)
+  :group 'playonline)
 
-(defcustom play-code-output-to-buffer-p t
+(defcustom playonline-output-to-buffer-p t
   "Show output in buffer or not."
   :type 'boolean
-  :group 'play-code)
+  :group 'playonline)
 
 ;;; playgrounds
 
-(defconst play-code-ground-alist
-  '((play-code-go-playground       . play-code-send-to-go-playground)
-    (play-code-rust-playground     . play-code-send-to-rust-playground)
-    (play-code-rextester-languages . play-code-send-to-rextester)
-    (play-code-labstack-languages  . play-code-send-to-labstack)))
+(defconst playonline-ground-alist
+  '((playonline-go-playground       . playonline-send-to-go-playground)
+    (playonline-rust-playground     . playonline-send-to-rust-playground)
+    (playonline-rextester-languages . playonline-send-to-rextester)
+    (playonline-labstack-languages  . playonline-send-to-labstack)))
 
-(defconst play-code-go-playground
+(defconst playonline-go-playground
   '((go-mode . (("go" . "Go")))))
 
-(defconst play-code-rust-playground
+(defconst playonline-rust-playground
   '((rust-mode . (("stable" . "Rust (stable)")))))
 
-(defconst play-code-rextester-languages
+(defconst playonline-rextester-languages
   '((ada-mode          . (("39" . "Ada")))
     (bash-mode         . (("38" . "Bash")))
     (brainfuck-mode    . (("44" . "Brainfuck")))
@@ -135,20 +135,20 @@
     (visual-basic-mode . (("2"  . "Visual Basic")))
     ))
 
-(defconst play-code-rextester-compiler-args
-  `((,(car (cadr (assoc 'c:gcc-mode     play-code-rextester-languages))) . "-Wall -std=gnu99 -O2 -o a.out source_file.c")
-    (,(car (cadr (assoc 'c:clang-mode   play-code-rextester-languages))) . "-Wall -std=gnu99 -O2 -o a.out source_file.c")
-    (,(car (cadr (assoc 'c:vc-mode      play-code-rextester-languages))) . "source_file.c -o a.exe")
-    (,(car (cadr (assoc 'c++:gcc-mode   play-code-rextester-languages))) . "-Wall -std=c++14 -O2 -o a.out source_file.cpp")
-    (,(car (cadr (assoc 'c++:clang-mode play-code-rextester-languages))) . "-Wall -std=c++14 -stdlib=libc++ -O2 -o a.out source_file.cpp")
-    (,(car (cadr (assoc 'c++:vc++-mode  play-code-rextester-languages))) . "source_file.cpp -o a.exe /EHsc /MD /I C:\\boost_1_60_0 /link /LIBPATH:C:\\boost_1_60_0\\stage\\lib")
-    (,(car (cadr (assoc 'd-mode         play-code-rextester-languages))) . "source_file.d -ofa.out")
-    (,(car (cadr (assoc 'go-mode        play-code-rextester-languages))) . "-o a.out source_file.go")
-    (,(car (cadr (assoc 'haskell-mode   play-code-rextester-languages))) . "-o a.out source_file.hs")
-    (,(car (cadr (assoc 'objc-mode      play-code-rextester-languages))) . "-MMD -MP -DGNUSTEP -DGNUSTEP_BASE_LIBRARY=1 -DGNU_GUI_LIBRARY=1 -DGNU_RUNTIME=1 -DGNUSTEP_BASE_LIBRARY=1 -fno-strict-aliasing -fexceptions -fobjc-exceptions -D_NATIVE_OBJC_EXCEPTIONS -pthread -fPIC -Wall -DGSWARN -DGSDIAGNOSE -Wno-import -g -O2 -fgnu-runtime -fconstant-string-class=NSConstantString -I. -I /usr/include/GNUstep -I/usr/include/GNUstep -o a.out source_file.m -lobjc -lgnustep-base")
+(defconst playonline-rextester-compiler-args
+  `((,(car (cadr (assoc 'c:gcc-mode     playonline-rextester-languages))) . "-Wall -std=gnu99 -O2 -o a.out source_file.c")
+    (,(car (cadr (assoc 'c:clang-mode   playonline-rextester-languages))) . "-Wall -std=gnu99 -O2 -o a.out source_file.c")
+    (,(car (cadr (assoc 'c:vc-mode      playonline-rextester-languages))) . "source_file.c -o a.exe")
+    (,(car (cadr (assoc 'c++:gcc-mode   playonline-rextester-languages))) . "-Wall -std=c++14 -O2 -o a.out source_file.cpp")
+    (,(car (cadr (assoc 'c++:clang-mode playonline-rextester-languages))) . "-Wall -std=c++14 -stdlib=libc++ -O2 -o a.out source_file.cpp")
+    (,(car (cadr (assoc 'c++:vc++-mode  playonline-rextester-languages))) . "source_file.cpp -o a.exe /EHsc /MD /I C:\\boost_1_60_0 /link /LIBPATH:C:\\boost_1_60_0\\stage\\lib")
+    (,(car (cadr (assoc 'd-mode         playonline-rextester-languages))) . "source_file.d -ofa.out")
+    (,(car (cadr (assoc 'go-mode        playonline-rextester-languages))) . "-o a.out source_file.go")
+    (,(car (cadr (assoc 'haskell-mode   playonline-rextester-languages))) . "-o a.out source_file.hs")
+    (,(car (cadr (assoc 'objc-mode      playonline-rextester-languages))) . "-MMD -MP -DGNUSTEP -DGNUSTEP_BASE_LIBRARY=1 -DGNU_GUI_LIBRARY=1 -DGNU_RUNTIME=1 -DGNUSTEP_BASE_LIBRARY=1 -fno-strict-aliasing -fexceptions -fobjc-exceptions -D_NATIVE_OBJC_EXCEPTIONS -pthread -fPIC -Wall -DGSWARN -DGSDIAGNOSE -Wno-import -g -O2 -fgnu-runtime -fconstant-string-class=NSConstantString -I. -I /usr/include/GNUstep -I/usr/include/GNUstep -o a.out source_file.m -lobjc -lgnustep-base")
     ))
 
-(defconst play-code-labstack-languages
+(defconst playonline-labstack-languages
   '((sh-mode           . (("bash"         . "Bash")))
     (c-mode            . (("c"            . "C")))
     (clojure-mode      . (("clojure"      . "Clojure")))
@@ -192,9 +192,9 @@
     (typescript-mode   . (("typescript"   . "TypeScript")))
     ))
 
-(defun play-code-send-to-go-playground (_ code)
+(defun playonline-send-to-go-playground (_ code)
   "Send CODE to `play.golang.org', return the execution result."
-  (funcall play-code-http-send-fn "https://play.golang.org/compile"
+  (funcall playonline-http-send-fn "https://play.golang.org/compile"
            :headers
            '(("content-type"    . "application/x-www-form-urlencoded; charset=UTF-8")
              ("accept"          . "application/json, text/javascript, */*; q=0.01")
@@ -210,10 +210,10 @@
                    (assoc-default 'Message (aref (assoc-default 'Events resp) 0))
                  errors)))))
 
-(defun play-code-send-to-rust-playground (channel-id code)
+(defun playonline-send-to-rust-playground (channel-id code)
   "Send CODE to `play.rust-lang.org', return the execution result."
 
-  (funcall play-code-http-send-fn "https://play.rust-lang.org/execute"
+  (funcall playonline-http-send-fn "https://play.rust-lang.org/execute"
            :headers
            '(("content-type"    . "application/json;charset=UTF-8")
              ("accept"          . "application/json")
@@ -235,16 +235,16 @@
                  (assoc-default 'stderr resp)
                (assoc-default 'stdout resp)))))
 
-(defun play-code-send-to-rextester (lang-id code)
+(defun playonline-send-to-rextester (lang-id code)
   "Send CODE to `rextester.com', return the execution result.
 LANG-ID to specific the language."
-  (funcall play-code-http-send-fn "https://rextester.com/rundotnet/run"
+  (funcall playonline-http-send-fn "https://rextester.com/rundotnet/run"
            :headers
            '(("content-type"    . "application/x-www-form-urlencoded; charset=UTF-8")
              ("accept"          . "text/plain, */*; q=0.01")
              ("accept-encoding" . "gzip"))
            :data
-           (let ((compiler-args (assoc-default lang-id play-code-rextester-compiler-args)))
+           (let ((compiler-args (assoc-default lang-id playonline-rextester-compiler-args)))
              (concat "LanguageChoiceWrapper="
                      lang-id
                      "&EditorChoiceWrapper=1&LayoutChoiceWrapper=1&Program="
@@ -261,10 +261,10 @@ LANG-ID to specific the language."
                  (unless (eq errors :null) errors)
                  (unless (eq result :null) result))))))
 
-(defun play-code-send-to-labstack (lang-id code)
+(defun playonline-send-to-labstack (lang-id code)
   "Send CODE to `code.labstack.com', return the execution result.
 LANG-ID to specific the language."
-  (funcall play-code-http-send-fn "https://code.labstack.com/api/v1/run"
+  (funcall playonline-http-send-fn "https://code.labstack.com/api/v1/run"
            :headers
            '(("content-type"    . "application/json;charset=UTF-8")
              ("accept"          . "application/json, text/plain, */*")
@@ -290,23 +290,23 @@ LANG-ID to specific the language."
 
 ;;; Wrapper
 
-(defconst play-code-main-wrap-functions
-  '((go-mode        . play-code--go-ensure-main-wrap)
-    (c-mode         . play-code--c-ensure-main-wrap)
-    (c:gcc-mode     . play-code--c-ensure-main-wrap)
-    (c:clang-mode   . play-code--c-ensure-main-wrap)
-    (c:vc-mode      . play-code--c-ensure-main-wrap)
-    (c++-mode       . play-code--cpp-ensure-main-wrap)
-    (c++:gcc-mode   . play-code--cpp-ensure-main-wrap)
-    (c++:clang-mode . play-code--cpp-ensure-main-wrap)
-    (c++:vc++-mode  . play-code--cpp-ensure-main-wrap)
-    (csharp-mode    . play-code--csharp-ensure-main-wrap)
-    (d-mode         . play-code--d-ensure-main-wrap)
-    (objc-mode      . play-code--objc-ensure-main-wrap)
-    (rust-mode      . play-code--rust-ensure-main-wrap)
+(defconst playonline-main-wrap-functions
+  '((go-mode        . playonline--go-ensure-main-wrap)
+    (c-mode         . playonline--c-ensure-main-wrap)
+    (c:gcc-mode     . playonline--c-ensure-main-wrap)
+    (c:clang-mode   . playonline--c-ensure-main-wrap)
+    (c:vc-mode      . playonline--c-ensure-main-wrap)
+    (c++-mode       . playonline--cpp-ensure-main-wrap)
+    (c++:gcc-mode   . playonline--cpp-ensure-main-wrap)
+    (c++:clang-mode . playonline--cpp-ensure-main-wrap)
+    (c++:vc++-mode  . playonline--cpp-ensure-main-wrap)
+    (csharp-mode    . playonline--csharp-ensure-main-wrap)
+    (d-mode         . playonline--d-ensure-main-wrap)
+    (objc-mode      . playonline--objc-ensure-main-wrap)
+    (rust-mode      . playonline--rust-ensure-main-wrap)
     ))
 
-(defun play-code--c-ensure-main-wrap (body)
+(defun playonline--c-ensure-main-wrap (body)
   "Wrap c BODY in 'main' function if necessary."
   (if (string-match-p "^[ \t]*int[ \n\t]*main *(" body)
       body
@@ -316,7 +316,7 @@ LANG-ID to specific the language."
             "\nreturn 0;"
             "\n}\n")))
 
-(defun play-code--cpp-ensure-main-wrap (body)
+(defun playonline--cpp-ensure-main-wrap (body)
   "Wrap cpp BODY in 'main' function if necessary."
   (if (string-match-p "^[ \t]*int[ \n\t]*main *(" body)
       body
@@ -326,7 +326,7 @@ LANG-ID to specific the language."
             "\nreturn 0;"
             "\n}\n")))
 
-(defun play-code--csharp-ensure-main-wrap (body)
+(defun playonline--csharp-ensure-main-wrap (body)
   "Wrap csharp BODY in 'main' function if necessary."
   (if (string-match-p "^[ \t]*public static void Main *(" body)
       body
@@ -334,14 +334,14 @@ LANG-ID to specific the language."
             "public class Code\n"
             "{\npublic static void Main(string[] args)\n{\n" body "\n}\n}\n")))
 
-(defun play-code--d-ensure-main-wrap (body)
+(defun playonline--d-ensure-main-wrap (body)
   "Wrap d BODY in 'main' function if necessary."
   (if (string-match-p "^[ \t]*void main *()" body)
       body
     (concat "import std.stdio;\n"
             "void main() {\n" body "\n}\n")))
 
-(defun play-code--go-ensure-main-wrap (body)
+(defun playonline--go-ensure-main-wrap (body)
   "Wrap go BODY in 'main' function if necessary."
   (if (string-match-p "^[ \t]*func main *() *{" body)
       body
@@ -350,7 +350,7 @@ LANG-ID to specific the language."
               "import \"fmt\"\n")
             "func main() {\n" body "\n}\n")))
 
-(defun play-code--objc-ensure-main-wrap (body)
+(defun playonline--objc-ensure-main-wrap (body)
   "Wrap objc BODY in 'main' function if necessary."
   (if (string-match-p "^[ \t]*int main *(" body)
       body
@@ -361,7 +361,7 @@ LANG-ID to specific the language."
             "\nreturn 0;"
             "\n}\n")))
 
-(defun play-code--rust-ensure-main-wrap (body)
+(defun playonline--rust-ensure-main-wrap (body)
   "Wrap rust BODY in 'main' function if necessary."
   (if (string-match-p "^[ \t]*fn main *(" body)
       body
@@ -369,20 +369,20 @@ LANG-ID to specific the language."
 
 ;;; HTTP functions
 
-(defconst play-code-http-send-fn
+(defconst playonline-http-send-fn
   (if (executable-find "curl")
-      #'play-code-request-send
-    #'play-code-url-send))
+      #'playonline-request-send
+    #'playonline-url-send))
 
-(cl-defun play-code-url-send (url &key (method "POST") headers data response-fn &allow-other-keys)
+(cl-defun playonline-url-send (url &key (method "POST") headers data response-fn &allow-other-keys)
   (let* ((url-request-method method)
          (url-request-extra-headers headers)
          (url-request-data data)
          (content-buf (url-retrieve-synchronously url)))
-    (play-code--handle-json-response content-buf
+    (playonline--handle-json-response content-buf
                                      response-fn)))
 
-(cl-defun play-code-request-send (url &key (method "POST") headers data response-fn &allow-other-keys)
+(cl-defun playonline-request-send (url &key (method "POST") headers data response-fn &allow-other-keys)
   (let ((response
          (request url
                   :type method
@@ -398,18 +398,18 @@ LANG-ID to specific the language."
 
 ;;;
 
-(defmacro play-code--fbound-and-true-p (fun)
+(defmacro playonline--fbound-and-true-p (fun)
   "Return the symbol FUN if it is bound, else nil."
   `(and (fboundp ,fun) ,fun))
 
-(defun play-code--pop-to-buffer (buf)
+(defun playonline--pop-to-buffer (buf)
   "Display buffer specified by BUF and select its window."
   (let ((win (selected-window)))
     (pop-to-buffer buf)
-    (unless play-code-focus-p
+    (unless playonline-focus-p
       (select-window win))))
 
-(defun play-code--handle-json-response (url-content-buf callback)
+(defun playonline--handle-json-response (url-content-buf callback)
   "Handle json response in URL-CONTENT-BUF.
 Function CALLBACK accept an alist, and return output string."
   (with-current-buffer url-content-buf
@@ -422,25 +422,25 @@ Function CALLBACK accept an alist, and return output string."
       (pcase http-code
         (200 (let* ((resp (json-read-from-string http-body))
                     (output (funcall callback resp))
-                    (output-buf (get-buffer-create play-code-buffer-name)))
-               (cond (play-code-output-to-buffer-p
+                    (output-buf (get-buffer-create playonline-buffer-name)))
+               (cond (playonline-output-to-buffer-p
                       (with-current-buffer output-buf
                         (read-only-mode -1)
                         (erase-buffer)
                         (insert output)
                         (read-only-mode 1)
-                        (play-code--pop-to-buffer output-buf)))
+                        (playonline--pop-to-buffer output-buf)))
                      (t output))))
         (_ (error http-body))))))
 
-(defun play-code--get-shebang-command ()
+(defun playonline--get-shebang-command ()
   "Get shabang program."
   (save-excursion
     (goto-char (point-min))
     (when (looking-at "#![^ \t]* \\(.*\\)$")
       (match-string-no-properties 1))))
 
-(defun play-code--nodejs-p ()
+(defun playonline--nodejs-p ()
   "Detect require / exports statment in buffer."
   (save-excursion
     (goto-char (point-min))
@@ -454,23 +454,23 @@ Function CALLBACK accept an alist, and return output string."
        nil t 1))
      t)))
 
-(defun play-code--get-mode-alias (&optional mode)
+(defun playonline--get-mode-alias (&optional mode)
   "Return alias of MODE.
 The alias naming in the form of `foo:<specifier>-mode' to
-opposite a certain version of lang in `play-code-xxx-languags'."
+opposite a certain version of lang in `playonline-xxx-languags'."
   (let ((mode (or mode major-mode)))
     (pcase mode
       (`python-mode
-       (pcase (list (play-code--get-shebang-command)
+       (pcase (list (playonline--get-shebang-command)
                     (file-name-extension (or (buffer-file-name) (buffer-name))))
          ((or `("python3" ,_) `(,_ "py3")) 'python:3-mode)
          ((or `("python2" ,_) `(,_ "py2")) 'python:2-mode)
          (_ mode)))
       ((or `js-mode `js2-mode `javascript-mode)
-       (if (play-code--nodejs-p) 'js:node-mode mode))
+       (if (playonline--nodejs-p) 'js:node-mode mode))
       (_ mode))))
 
-(defun play-code--get-ground (mode)
+(defun playonline--get-ground (mode)
   "Return (((lang-id . lang-name) ...) . send-function) for MODE."
   (catch 'break
     (mapc
@@ -481,32 +481,32 @@ opposite a certain version of lang in `play-code-xxx-languags'."
              (setq lang (assoc symbol (symbol-value (car ground))))))
          (when lang
            (throw 'break (cons (cdr lang) (cdr ground))))))
-     play-code-ground-alist)
+     playonline-ground-alist)
     nil))
 
-(defun play-code--get-lang-and-function (mode)
+(defun playonline--get-lang-and-function (mode)
   "Return (lang sender wrapper) for MODE."
   (pcase-let*
-      ((`(,langs . ,sender) (play-code--get-ground mode))
+      ((`(,langs . ,sender) (playonline--get-ground mode))
        (`(,lang . ,_desc)
          (cond ((> (length langs) 1)
                 (rassoc
                  (completing-read "Choose: " (mapcar (lambda (it) (cdr it)) langs))
                  langs))
                (t (car langs))))
-       (`(,_mode . ,wrapper) (assoc mode play-code-main-wrap-functions)))
+       (`(,_mode . ,wrapper) (assoc mode playonline-main-wrap-functions)))
     ;; (message "==> lang: %s, sender: %s, wrapper: %s" lang sender wrapper)
     (when (or (not lang)
               (not sender))
       (error "No lang-id or sender found"))
     (list lang sender wrapper)))
 
-(defun play-code-orgmode-src-block (&optional beg end)
+(defun playonline-orgmode-src-block (&optional beg end)
   "Return orgmode src block in the form of (mode code bounds)."
   (require 'org)
   (-if-let* ((src-element (org-element-at-point)))
-      (list (funcall (or (play-code--fbound-and-true-p 'org-src--get-lang-mode)
-                                     (play-code--fbound-and-true-p 'org-src-get-lang-mode))
+      (list (funcall (or (playonline--fbound-and-true-p 'org-src--get-lang-mode)
+                                     (playonline--fbound-and-true-p 'org-src-get-lang-mode))
                                  (org-element-property :language src-element))
             (if (region-active-p)
                        (buffer-substring-no-properties beg end)
@@ -516,7 +516,7 @@ opposite a certain version of lang in `play-code-xxx-languags'."
               (looking-at org-babel-src-block-regexp)
               (list (match-beginning 5) (match-end 5))))))
 
-(defun play-code-markdown-src-block (&optional beg end)
+(defun playonline-markdown-src-block (&optional beg end)
   "Return markdown src block in the form of (mode code bounds)."
   (require 'markdown-mode)
   (save-excursion
@@ -535,7 +535,7 @@ opposite a certain version of lang in `play-code-xxx-languags'."
 ;;;
 
 ;;;###autoload
-(defun play-code (&optional beg end)
+(defun playonline (&optional beg end)
   "Play code online.
 
 This function can be applied to:
@@ -547,23 +547,23 @@ This function can be applied to:
   (pcase-let*
       ((`(,mode ,code ,bounds)
          (pcase major-mode
-           (`org-mode (play-code-orgmode-src-block beg end))
-           (`markdown-mode (play-code-markdown-src-block beg end))
+           (`org-mode (playonline-orgmode-src-block beg end))
+           (`markdown-mode (playonline-markdown-src-block beg end))
            (_ (list major-mode
                     (if (region-active-p)
                         (buffer-substring-no-properties beg end)
                       (buffer-substring-no-properties (point-min) (point-max)))
                     nil))))
        (`(,lang ,sender ,wrapper)
-         (play-code--get-lang-and-function
+         (playonline--get-lang-and-function
           (save-restriction
             (when bounds
               (apply 'narrow-to-region bounds))
-            (play-code--get-mode-alias mode)))))
+            (playonline--get-mode-alias mode)))))
     (funcall sender lang (if wrapper
                              (funcall wrapper code)
                            code))))
 
-(provide 'play-code)
+(provide 'playonline)
 
-;;; play-code.el ends here
+;;; playonline.el ends here

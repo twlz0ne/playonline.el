@@ -1,7 +1,7 @@
 EMACS ?= emacs
-ELS = play-code.el
-ELCS = play-code.elc
-TEST_ELS = cask-bootstrap.el play-code-test.el
+ELS = playonline.el
+ELCS = playonline.elc
+TEST_ELS = cask-bootstrap.el playonline-test.el
 
 # If the first argument is "test"...
 ifeq (test, $(firstword $(MAKECMDGOALS)))

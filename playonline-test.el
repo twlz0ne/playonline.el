@@ -1,4 +1,4 @@
-;;; play-code-test.el --- Test play-code.el -*- lexical-binding: t; -*-
+;;; playonline-test.el --- Test playonline.el -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2019 Gong Qijian <gongqijian@gmail.com>
 
@@ -19,8 +19,8 @@
 
 (require 'ert)
 (require 'markdown-mode)
-(require 'play-code)
-(require 'play-code-test-helper)
+(require 'playonline)
+(require 'playonline-test-helper)
 
 ;; Set to nil to print more detail but sometimes it becomes a disturbance.
 ;; (setq ert-batch-backtrace-right-margin nil)
@@ -30,8 +30,8 @@
 
 (cl-defun --with-code-buffer
     (&key ground code mode choose expect expect-fn &allow-other-keys)
-  (let ((play-code-output-to-buffer-p nil)
-        (play-code-ground-alist (or ground play-code-ground-alist))
+  (let ((playonline-output-to-buffer-p nil)
+        (playonline-ground-alist (or ground playonline-ground-alist))
         (buf (generate-new-buffer "*test*")))
     (with-current-buffer buf
       (unless (fboundp mode)
@@ -43,7 +43,7 @@
         (funcall mode))
       (insert code)
       (if expect
-          (should (string= expect (play-code)))
+          (should (string= expect (playonline)))
         (if expect-fn
             (error "Not implement!"))))))
 
@@ -66,8 +66,8 @@
 
 ;;; Wrapper
 
-(ert-deftest play-code-test-c-wrapper ()
-  (let* ((wrapper (assoc-default 'c-mode play-code-main-wrap-functions))
+(ert-deftest playonline-test-c-wrapper ()
+  (let* ((wrapper (assoc-default 'c-mode playonline-main-wrap-functions))
          (unwrapped-code "printf(\"Hello, C!\");")
          (wrapped-code (--concat
                         "#include <stdio.h>"
@@ -78,8 +78,8 @@
     (should (string= wrapped-code (funcall wrapper unwrapped-code)))
     (should (string= wrapped-code (funcall wrapper wrapped-code)))))
 
-(ert-deftest play-code-test-cpp-wrapper ()
-  (let* ((wrapper (assoc-default 'c++-mode play-code-main-wrap-functions))
+(ert-deftest playonline-test-cpp-wrapper ()
+  (let* ((wrapper (assoc-default 'c++-mode playonline-main-wrap-functions))
          (unwrapped-code "std::cout << \"Hello, C++!\";")
          (wrapped-code (--concat
                         "#include <iostream>"
@@ -90,8 +90,8 @@
     (should (string= wrapped-code (funcall wrapper unwrapped-code)))
     (should (string= wrapped-code (funcall wrapper wrapped-code)))))
 
-(ert-deftest play-code-test-csharp-wrapper ()
-  (let* ((wrapper (assoc-default 'csharp-mode play-code-main-wrap-functions))
+(ert-deftest playonline-test-csharp-wrapper ()
+  (let* ((wrapper (assoc-default 'csharp-mode playonline-main-wrap-functions))
          (unwrapped-code "Console.WriteLine(\"Hello, C#!\");")
          (wrapped-code (--concat
                         "using System;"
@@ -102,8 +102,8 @@
     (should (string= wrapped-code (funcall wrapper unwrapped-code)))
     (should (string= wrapped-code (funcall wrapper wrapped-code)))))
 
-(ert-deftest play-code-test-d-wrapper ()
-  (let* ((wrapper (assoc-default 'd-mode play-code-main-wrap-functions))
+(ert-deftest playonline-test-d-wrapper ()
+  (let* ((wrapper (assoc-default 'd-mode playonline-main-wrap-functions))
          (unwrapped-code "writeln(\"Hello, D!\");")
          (wrapped-code (--concat
                         "import std.stdio;"
@@ -113,8 +113,8 @@
     (should (string= wrapped-code (funcall wrapper unwrapped-code)))
     (should (string= wrapped-code (funcall wrapper wrapped-code)))))
 
-(ert-deftest play-code-test-go-wrapper ()
-  (let* ((wrapper (assoc-default 'go-mode play-code-main-wrap-functions))
+(ert-deftest playonline-test-go-wrapper ()
+  (let* ((wrapper (assoc-default 'go-mode playonline-main-wrap-functions))
          (unwrapped-code "fmt.Println(\"Hello, Go!\")")
          (wrapped-code (--concat "package main"
                                  "import \"fmt\""
@@ -124,8 +124,8 @@
     (should (string= wrapped-code (funcall wrapper unwrapped-code)))
     (should (string= wrapped-code (funcall wrapper wrapped-code)))))
 
-(ert-deftest play-code-test-objc-wrapper ()
-  (let* ((wrapper (assoc-default 'objc-mode play-code-main-wrap-functions))
+(ert-deftest playonline-test-objc-wrapper ()
+  (let* ((wrapper (assoc-default 'objc-mode playonline-main-wrap-functions))
          (unwrapped-code "NSLog (@\"Hello, Objc!\");")
          (wrapped-code (--concat "#import <Foundation/Foundation.h>"
                                  "int main (int argc, const char * argv[])"
@@ -136,8 +136,8 @@
     (should (string= wrapped-code (funcall wrapper unwrapped-code)))
     (should (string= wrapped-code (funcall wrapper wrapped-code)))))
 
-(ert-deftest play-code-test-rust-wrapper ()
-  (let* ((wrapper (assoc-default 'rust-mode play-code-main-wrap-functions))
+(ert-deftest playonline-test-rust-wrapper ()
+  (let* ((wrapper (assoc-default 'rust-mode playonline-main-wrap-functions))
          (unwrapped-code "println!(\"Hello, Rust!\")")
          (wrapped-code (--concat "fn main() {"
                                  unwrapped-code
@@ -147,70 +147,70 @@
 
 ;;; Send code directly
 
-(ert-deftest play-code-test-c-code/labstack ()
+(ert-deftest playonline-test-c-code/labstack ()
   (--with-code-buffer
-   :ground '((play-code-labstack-languages . play-code-send-to-labstack))
+   :ground '((playonline-labstack-languages . playonline-send-to-labstack))
    :mode   'c-mode
    :code   "printf(\"Hello, C!\\n\");"
    :expect "Hello, C!\n"))
 
-(ert-deftest play-code-test-cpp-code/labstack ()
+(ert-deftest playonline-test-cpp-code/labstack ()
   (--with-code-buffer
-   :ground '((play-code-labstack-languages . play-code-send-to-labstack))
+   :ground '((playonline-labstack-languages . playonline-send-to-labstack))
    :mode   'c++-mode
    :code   "std::cout << \"Hello, CPP(Gcc)\\n\";"
    :expect "Hello, CPP(Gcc)\n"
    ))
 
-(ert-deftest play-code-test-c@clang-code ()
+(ert-deftest playonline-test-c@clang-code ()
   (--with-code-buffer
-   :ground '((play-code-rextester-languages . play-code-send-to-rextester))
+   :ground '((playonline-rextester-languages . playonline-send-to-rextester))
    :mode   'c-mode
    :choose 'c:clang-mode
    :code   "printf(\"Hello, C(Clang)!\\n\");"
    :expect "Hello, C(Clang)!\n"))
 
-(ert-deftest play-code-test-c@gcc-code ()
+(ert-deftest playonline-test-c@gcc-code ()
 (--with-code-buffer
-   :ground '((play-code-rextester-languages . play-code-send-to-rextester))
+   :ground '((playonline-rextester-languages . playonline-send-to-rextester))
    :mode   'c-mode
    :choose 'c:gcc-mode
    :code   "printf(\"Hello, C(Gcc)!\\n\");"
    :expect "Hello, C(Gcc)!\n"))
 
-(ert-deftest play-code-test-c@vc-code ()
+(ert-deftest playonline-test-c@vc-code ()
   (--with-code-buffer
-   :ground '((play-code-rextester-languages . play-code-send-to-rextester))
+   :ground '((playonline-rextester-languages . playonline-send-to-rextester))
    :mode   'c-mode
    :choose 'c:vc-mode
    :code   "printf(\"Hello, C(VC)!\\n\");"
    :expect "Hello, C(VC)!\r\n"))
 
-(ert-deftest play-code-test-cpp@gcc-code ()
+(ert-deftest playonline-test-cpp@gcc-code ()
   (--with-code-buffer
-   :ground '((play-code-rextester-languages . play-code-send-to-rextester))
+   :ground '((playonline-rextester-languages . playonline-send-to-rextester))
    :mode   'c++-mode
    :choose 'c++:gcc-mode
    :code   "std::cout << \"Hello, C++(GCC)!\\n\";"
    :expect "Hello, C++(GCC)!\n"))
 
-(ert-deftest play-code-test-cpp@clang-code ()
+(ert-deftest playonline-test-cpp@clang-code ()
   (--with-code-buffer
-   :ground '((play-code-rextester-languages . play-code-send-to-rextester))
+   :ground '((playonline-rextester-languages . playonline-send-to-rextester))
    :mode   'c++-mode
    :choose 'c++:clang-mode
    :code   "std::cout << \"Hello, C++(Clang)!\\n\";"
    :expect "Hello, C++(Clang)!\n"))
 
-(ert-deftest play-code-test-cpp@vcpp-code ()
+(ert-deftest playonline-test-cpp@vcpp-code ()
   (--with-code-buffer
-   :ground '((play-code-rextester-languages . play-code-send-to-rextester))
+   :ground '((playonline-rextester-languages . playonline-send-to-rextester))
    :mode   'c++-mode
    :choose 'c++:vc++-mode
    :code   "std::cout << \"Hello, C++(VC++)!\\n\";"
    :expect "Hello, C++(VC++)!\r\n"))
 
-(ert-deftest play-code-test-go-code ()
+(ert-deftest playonline-test-go-code ()
   ;; golang.org
   (--with-code-buffer
    :mode 'go-mode
@@ -218,59 +218,59 @@
    :expect "Hello, Go\n")
   ;; rextester
   (--with-code-buffer
-   :ground '((play-code-rextester-languages . play-code-send-to-rextester))
+   :ground '((playonline-rextester-languages . playonline-send-to-rextester))
    :mode 'go-mode
    :code "fmt.Println(\"Hello, Go\")"
    :expect "Hello, Go\n")
   ;; labstack
   (--with-code-buffer
-   :ground '((play-code-labstack-languages . play-code-send-to-labstack))
+   :ground '((playonline-labstack-languages . playonline-send-to-labstack))
    :mode 'go-mode
    :code "fmt.Println(\"Hello, Go\")"
    :expect "Hello, Go\n"))
 
-(ert-deftest play-code-test-python3-code ()
+(ert-deftest playonline-test-python3-code ()
   (--with-code-buffer
-   :ground '((play-code-labstack-languages . play-code-send-to-labstack))
+   :ground '((playonline-labstack-languages . playonline-send-to-labstack))
    :mode 'python-mode
    :choose 'python:3-mode
    :code "print('Hello, Python3')"
    :expect "Hello, Python3\n"))
 
-(ert-deftest play-code-test-rust-code ()
-  (let ((play-code-output-to-buffer-p nil)
-        (code (play-code--rust-ensure-main-wrap "println!(\"Hello, Rust\");")))
-    (pcase-let ((`(,lang ,func) (play-code--get-lang-and-function 'rust-mode)))
-      (should (eq func 'play-code-send-to-rust-playground))
+(ert-deftest playonline-test-rust-code ()
+  (let ((playonline-output-to-buffer-p nil)
+        (code (playonline--rust-ensure-main-wrap "println!(\"Hello, Rust\");")))
+    (pcase-let ((`(,lang ,func) (playonline--get-lang-and-function 'rust-mode)))
+      (should (eq func 'playonline-send-to-rust-playground))
       (should (string= "Hello, Rust\n"
                        (funcall func lang code))))
-    (let ((play-code-ground-alist '((play-code-labstack-languages . play-code-send-to-labstack))))
-      (pcase-let ((`(,lang ,func) (play-code--get-lang-and-function 'rust-mode)))
-        (should (eq func 'play-code-send-to-labstack))
+    (let ((playonline-ground-alist '((playonline-labstack-languages . playonline-send-to-labstack))))
+      (pcase-let ((`(,lang ,func) (playonline--get-lang-and-function 'rust-mode)))
+        (should (eq func 'playonline-send-to-labstack))
         (should (string= "Hello, Rust\n"
                          (funcall func lang code)))))))
 
 ;;; Play code in block
 
-(ert-deftest play-code-test-python3-code-in-markdown ()
-  (let ((play-code-output-to-buffer-p nil))
+(ert-deftest playonline-test-python3-code-in-markdown ()
+  (let ((playonline-output-to-buffer-p nil))
     (--with-code-block
      'markdown-mode
      "```python
 #!/usr/bin/env python3
 print('hello, python3')<>
 ```"
-     (should (string= "hello, python3\n" (play-code))))))
+     (should (string= "hello, python3\n" (playonline))))))
 
-(ert-deftest play-code-test-rust-code-in-orgmode ()
-  (let ((play-code-output-to-buffer-p nil))
+(ert-deftest playonline-test-rust-code-in-orgmode ()
+  (let ((playonline-output-to-buffer-p nil))
     (--with-code-block
      'org-mode
      "#+BEGIN_SRC rust
 fn main () { println!(\"hello, rust\"); }<>
 #+END_SRC"
-     (should (string= "hello, rust\n" (play-code))))))
+     (should (string= "hello, rust\n" (playonline))))))
 
-(provide 'play-code-test)
+(provide 'playonline-test)
 
-;;; play-code-test.el ends here
+;;; playonline-test.el ends here

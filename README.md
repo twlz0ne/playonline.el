@@ -1,6 +1,6 @@
-[![Build Status](https://travis-ci.com/twlz0ne/play-code.el.svg?branch=master)](https://travis-ci.com/twlz0ne/play-code.el)
+[![Build Status](https://travis-ci.com/twlz0ne/playonline.el.svg?branch=master)](https://travis-ci.com/twlz0ne/playonline.el)
 
-# play-code.el
+# playonline.el
 
 Play code with online playgrounds.
 
@@ -11,21 +11,21 @@ Currently support:
 - [rextester](https://rextester.com)            (third-party)
 - [labstack](https://code.labstack.com)         (third-party)
 
-The priority of official playground is higher than the third-party, it can be changed by modifying `play-code-ground-alist`.
+The priority of official playground is higher than the third-party, it can be changed by modifying `playonline-ground-alist`.
 
 ## Installation
 
 Clone this repository, then add the following to your `.emacs`:
 
 ```elisp
-(add-to-list 'load-path (expand-file-name "~/.emacs.d/site-lisp/play-code"))
-(require 'play-code)
+(add-to-list 'load-path (expand-file-name "~/.emacs.d/site-lisp/playonline"))
+(require 'playonline)
 ```
 
 ## Usage
 
 ```
-M-x play-code
+M-x playonline
 ```
 
 This function can be applied to:
