@@ -9,6 +9,7 @@ Currently support:
 - [Go playground](https://play.golang.org/)     (official)
 - [Rust playground](https://play.rust-lang.org) (official)
 - [rextester](https://rextester.com)            (third-party)
+- [mycompiler](https://www.mycompiler.io)       (third-party)
 - [labstack](https://code.labstack.com)         (third-party)
 
 The priority of official playground is higher than the third-party, it can be changed by modifying `playonline-ground-alist`.

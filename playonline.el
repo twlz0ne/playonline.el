@@ -164,6 +164,31 @@
    (typescript-mode   . (("typescript"   . "TypeScript")))
    ))
 
+(playonline-define-playground mycompiler
+  :url "https://www.mycompiler.io"
+  :sendfn playonline-send-to-mycompiler
+  :languages
+  ((asm-mode        . (("asm-x86_64" . "Assembly")))
+   (bash-mode       . (("bash"       . "Bash")))
+   (c-mode          . (("c"          . "C")))
+   (clojure-mode    . (("clojure"    . "Clojure")))
+   (cpp-mode        . (("cpp"        . "C++")))
+   (csharp-mode     . (("csharp"     . "C#")))
+   (d-mode          . (("d"          . "D")))
+   (erlang-mode     . (("erlang"     . "Erlang")))
+   (fortran-mode    . (("fortran"    . "Fortran")))
+   (go-mode         . (("go"         . "Go")))
+   (java-mode       . (("java"       . "Java")))
+   (lua-mode        . (("lua"        . "Lua")))
+   (nodejs-mode     . (("nodejs"     . "NodeJS")))
+   (perl-mode       . (("perl"       . "Perl")))
+   (php-mode        . (("php"        . "PHP")))
+   (python-mode     . (("python"     . "Python")))
+   (r-mode          . (("r"          . "R")))
+   (ruby-mode       . (("ruby"       . "Ruby")))
+   (sql-mode        . (("sql"        . "SQL")))
+   (typescript-mode . (("typescript" . "Typescript")))))
+
 (playonline-define-playground rextester
   :url "https://rextester.com"
   :sendfn playonline-send-to-rextester
@@ -246,6 +271,7 @@
   :sendfn playonline-send-to-go-playground
   :languages
   ((go-mode . (("go" . "Go")))))
+
 (defun playonline-send-to-go-playground (_ code &optional _compiler-arg)
   "Send CODE to `play.golang.org', return the execution result."
   (funcall playonline-http-send-fn "https://play.golang.org/compile"
@@ -340,6 +366,31 @@ LANG-ID to specific the language."
                  (assoc-default 'message resp)
                (concat (assoc-default 'stdout resp)
                        (assoc-default 'stderr resp))))))
+
+(defun playonline-send-to-mycompiler (lang-id code &optional _compiler-arg)
+  "Send code to `https://exec.mycompiler.io', return the execution result.
+LANG-ID to specific the language."
+  (funcall playonline-http-send-fn
+           (format "https://exec.mycompiler.io/run/%s" lang-id)
+           :headers
+           '(("content-type"    . "application/x-www-form-urlencoded; charset=UTF-8")
+             ("accept"          . "application/json, text/plain, */*")
+             ("accept-encoding" . "gzip")
+             ("origin"          . "https://www.mycompiler.io"))
+           :data
+           (concat "code="
+                   (url-hexify-string code)
+                   "&stdin=")
+           :response-prepfn
+           (lambda (resp)
+             (replace-regexp-in-string "\\`[.]\\{1,\\}:" "" resp))
+           :response-fn
+           (lambda (resp)
+             (let* ((payload (assoc-default 'payload resp))
+                    (result (replace-regexp-in-string "\n\\[Program exited with exit code 0\\]\\'" "" payload)))
+               (if (string= result "")
+                   "[Program exited with exit code 0]"
+                 result)))))
 
 ;;; Wrapper
 

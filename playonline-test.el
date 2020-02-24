@@ -238,6 +238,13 @@
    :code "print('Hello, Python3')"
    :expect "Hello, Python3\n"))
 
+(ert-deftest playonline-test-python-code-in-mycompiler ()
+  (--with-code-buffer
+   :grounds '(mycompiler)
+   :mode 'python-mode
+   :code "print('Hello, Python')"
+   :expect "Hello, Python\n"))
+
 (ert-deftest playonline-test-rust-code ()
   (let ((playonline-output-to-buffer-p nil)
         (code (playonline--rust-ensure-main-wrap "println!(\"Hello, Rust\");")))
