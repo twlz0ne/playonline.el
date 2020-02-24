@@ -27,41 +27,12 @@
 (when (load "proxy-conf.el" t)
   (require 'with-proxy)
   (with-eval-after-load 'playonline
-    (defun playonline (&optional beg end)
-      "Play code online.
-
-This function can be applied to:
-- buffer
-- region
-- block (or region in block) ;; require org-mode / markdown
-"
-      (interactive "r")
-      (pcase-let*
-          ((`(,mode ,code ,bounds)
-            (pcase major-mode
-              (`org-mode (playonline-orgmode-src-block beg end))
-              (`markdown-mode (playonline-markdown-src-block beg end))
-              (_ (list major-mode
-                       (if (region-active-p)
-                           (buffer-substring-no-properties beg end)
-                         (buffer-substring-no-properties (point-min) (point-max)))
-                       nil))))
-           (`(,lang ,sender ,wrapper)
-            (playonline--get-lang-and-function
-             (save-restriction
-               (when bounds
-                 (apply 'narrow-to-region bounds))
-               (playonline--get-mode-alias mode)))))
-        ;; {{{+++
-        (when (memq sender (bound-and-true-p with-proxy-senders))
-          (setq sender (let ((orig-sender sender))
-                         (lambda (&rest args)
-                           (with-proxy
-                             (apply orig-sender args))))))
-        ;; }}}+++
-        (funcall sender lang (if wrapper
-                                 (funcall wrapper code)
-                               code))))))
+    (dolist (sym with-proxy-senders)
+      (let* ((orig-fn (symbol-function sym))
+             (wrapper (lambda (&rest args)
+                        (with-proxy
+                            (apply orig-fn args)))))
+        (fset sym wrapper)))))
 
 (provide 'playonline-test-helper)
 
