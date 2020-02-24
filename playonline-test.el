@@ -49,17 +49,17 @@
 
 (defmacro --with-code-block (mode content &rest body)
   `(let ((buf (generate-new-buffer "*test*")))
-    (with-current-buffer buf
-      (funcall ,mode)
-      (insert ,content)
-      (goto-char (point-min))
-      (when (re-search-forward "\<\>" nil t 1)
-        (replace-match ""))
-      (let ((noninteractive nil))
-        (font-lock-mode 1)
-        (font-lock-set-defaults)
-        (jit-lock-fontify-now (point-min) (point-max)))
-      ,@body)))
+     (with-current-buffer buf
+       (funcall ,mode)
+       (insert ,content)
+       (goto-char (point-min))
+       (when (re-search-forward "\<\>" nil t 1)
+         (replace-match ""))
+       (let ((noninteractive nil))
+         (font-lock-mode 1)
+         (font-lock-set-defaults)
+         (jit-lock-fontify-now (point-min) (point-max)))
+       ,@body)))
 
 (defun --concat (&rest lines)
   (mapconcat 'identity lines "\n"))
@@ -171,7 +171,7 @@
    :expect "Hello, C(Clang)!\n"))
 
 (ert-deftest playonline-test-c@gcc-code ()
-(--with-code-buffer
+  (--with-code-buffer
    :ground '((playonline-rextester-languages . playonline-send-to-rextester))
    :mode   'c-mode
    :choose 'c:gcc-mode

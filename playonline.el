@@ -255,11 +255,11 @@ LANG-ID to specific the language."
            :response-fn
            (lambda (resp)
              (let* ((warnings (assoc-default 'Warnings resp))
-              (errors (assoc-default 'Errors resp))
-              (result (assoc-default 'Result resp)))
-         (concat (unless (eq warnings :null) warnings)
-                 (unless (eq errors :null) errors)
-                 (unless (eq result :null) result))))))
+                    (errors (assoc-default 'Errors resp))
+                    (result (assoc-default 'Result resp)))
+               (concat (unless (eq warnings :null) warnings)
+                       (unless (eq errors :null) errors)
+                       (unless (eq result :null) result))))))
 
 (defun playonline-send-to-labstack (lang-id code)
   "Send CODE to `code.labstack.com', return the execution result.
@@ -380,16 +380,16 @@ LANG-ID to specific the language."
          (url-request-data data)
          (content-buf (url-retrieve-synchronously url)))
     (playonline--handle-json-response content-buf
-                                     response-fn)))
+                                      response-fn)))
 
 (cl-defun playonline-request-send (url &key (method "POST") headers data response-fn &allow-other-keys)
   (let ((response
          (request url
-                  :type method
-                  :headers headers
-                  :data data
-                  :sync t
-                  :parser #'buffer-string)))
+           :type method
+           :headers headers
+           :data data
+           :sync t
+           :parser #'buffer-string)))
     (let ((response-code (request-response-status-code response))
           (response-body (request-response-data response)))
       (if (= response-code 200)
@@ -489,11 +489,11 @@ opposite a certain version of lang in `playonline-xxx-languags'."
   (pcase-let*
       ((`(,langs . ,sender) (playonline--get-ground mode))
        (`(,lang . ,_desc)
-         (cond ((> (length langs) 1)
-                (rassoc
-                 (completing-read "Choose: " (mapcar (lambda (it) (cdr it)) langs))
-                 langs))
-               (t (car langs))))
+        (cond ((> (length langs) 1)
+               (rassoc
+                (completing-read "Choose: " (mapcar (lambda (it) (cdr it)) langs))
+                langs))
+              (t (car langs))))
        (`(,_mode . ,wrapper) (assoc mode playonline-main-wrap-functions)))
     ;; (message "==> lang: %s, sender: %s, wrapper: %s" lang sender wrapper)
     (when (or (not lang)
@@ -506,11 +506,11 @@ opposite a certain version of lang in `playonline-xxx-languags'."
   (require 'org)
   (-if-let* ((src-element (org-element-at-point)))
       (list (funcall (or (playonline--fbound-and-true-p 'org-src--get-lang-mode)
-                                     (playonline--fbound-and-true-p 'org-src-get-lang-mode))
-                                 (org-element-property :language src-element))
+                         (playonline--fbound-and-true-p 'org-src-get-lang-mode))
+                     (org-element-property :language src-element))
             (if (region-active-p)
-                       (buffer-substring-no-properties beg end)
-                     (org-element-property :value src-element))
+                (buffer-substring-no-properties beg end)
+              (org-element-property :value src-element))
             (save-excursion
               (goto-char (plist-get (cadr src-element) :begin))
               (looking-at org-babel-src-block-regexp)
@@ -546,20 +546,20 @@ This function can be applied to:
   (interactive "r")
   (pcase-let*
       ((`(,mode ,code ,bounds)
-         (pcase major-mode
-           (`org-mode (playonline-orgmode-src-block beg end))
-           (`markdown-mode (playonline-markdown-src-block beg end))
-           (_ (list major-mode
-                    (if (region-active-p)
-                        (buffer-substring-no-properties beg end)
-                      (buffer-substring-no-properties (point-min) (point-max)))
-                    nil))))
+        (pcase major-mode
+          (`org-mode (playonline-orgmode-src-block beg end))
+          (`markdown-mode (playonline-markdown-src-block beg end))
+          (_ (list major-mode
+                   (if (region-active-p)
+                       (buffer-substring-no-properties beg end)
+                     (buffer-substring-no-properties (point-min) (point-max)))
+                   nil))))
        (`(,lang ,sender ,wrapper)
-         (playonline--get-lang-and-function
-          (save-restriction
-            (when bounds
-              (apply 'narrow-to-region bounds))
-            (playonline--get-mode-alias mode)))))
+        (playonline--get-lang-and-function
+         (save-restriction
+           (when bounds
+             (apply 'narrow-to-region bounds))
+           (playonline--get-mode-alias mode)))))
     (funcall sender lang (if wrapper
                              (funcall wrapper code)
                            code))))
