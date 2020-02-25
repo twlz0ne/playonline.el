@@ -161,8 +161,7 @@
    (scala-mode        . (("scala"        . "Scala")))
    (swift-mode        . (("swift"        . "Swift")))
    (tcl-mode          . (("tcl"          . "TCL")))
-   (typescript-mode   . (("typescript"   . "TypeScript")))
-   ))
+   (typescript-mode   . (("typescript"   . "TypeScript")))))
 
 (playonline-define-playground mycompiler
   :url "https://www.mycompiler.io"
@@ -407,8 +406,7 @@ LANG-ID to specific the language."
     (csharp-mode    . playonline--csharp-ensure-main-wrap)
     (d-mode         . playonline--d-ensure-main-wrap)
     (objc-mode      . playonline--objc-ensure-main-wrap)
-    (rust-mode      . playonline--rust-ensure-main-wrap)
-    ))
+    (rust-mode      . playonline--rust-ensure-main-wrap)))
 
 (defun playonline--c-ensure-main-wrap (body)
   "Wrap c BODY in 'main' function if necessary."
