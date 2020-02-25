@@ -72,6 +72,13 @@
     #'playonline-url-send))
 
 (cl-defun playonline-url-send (url &key (method "POST") headers data response-prepfn response-fn &allow-other-keys)
+  "Send DATA to URL synchronously via `url.el'.
+
+METHOD is a http methed name, default is \"POST\".
+HEADERS is a list of http headers in form of alist.
+RESPONSE-PREPFN is a function that takes one argument (response body string).
+RESPONSE-FN is a function that takes one argument (response body json), it will
+be called with one argument after RESPONSE-PREPFN."
   (let* ((url-request-method method)
          (url-request-extra-headers headers)
          (url-request-data data)
@@ -81,6 +88,13 @@
                                       response-fn)))
 
 (cl-defun playonline-request-send (url &key (method "POST") headers data response-prepfn response-fn &allow-other-keys)
+  "Send DATA to URL synchronously via `request.el'.
+
+METHOD is a http methed name, default is \"POST\".
+HEADERS is a list of http headers in form of alist.
+RESPONSE-PREPFN is a function that takes one argument (response body string).
+RESPONSE-FN is a function that takes one argument (response body json), it will
+be called with one argument after RESPONSE-PREPFN."
   (let ((response
          (request url
            :type method
@@ -105,6 +119,13 @@
   id url sendfn languages compiler-args)
 
 (cl-defmacro playonline-define-playground (id &key url sendfn languages compiler-args &allow-other-keys)
+  "Make a new instance of `playonline-playground'.
+
+ID            - the id of playground
+URL           - the websit of playground
+SENDFN        - the send function of playground
+LANGUAGES     - an alist of language spec
+COMPILER-ARGS - an alist of compiler argument spec"
   (declare (indent defun) (debug t))
   `(let* ((instance (make-playonline-playground
                      :id            ',id
@@ -289,8 +310,9 @@
                    (assoc-default 'Message (aref (assoc-default 'Events resp) 0))
                  errors)))))
 
-(defun playonline-send-to-rust-playground (channel-id code &optional _compiler-arg)
-  "Send CODE to `play.rust-lang.org', return the execution result."
+(defun playonline-send-to-rust-playground (lang-id code &optional _compiler-arg)
+  "Send CODE to `play.rust-lang.org', return the execution result.
+LANG-ID to specific the language."
 
   (funcall playonline-http-send-fn "https://play.rust-lang.org/execute"
            :headers
@@ -300,7 +322,7 @@
            :data
            (encode-coding-string
             (json-encode-plist
-             `(:channel ,channel-id
+             `(:channel ,lang-id
                :mode "debug"
                :edition "2018"
                :crateType "bin"
@@ -367,7 +389,7 @@ LANG-ID to specific the language."
                        (assoc-default 'stderr resp))))))
 
 (defun playonline-send-to-mycompiler (lang-id code &optional _compiler-arg)
-  "Send code to `https://exec.mycompiler.io', return the execution result.
+  "Send CODE to `https://exec.mycompiler.io', return the execution result.
 LANG-ID to specific the language."
   (funcall playonline-http-send-fn
            (format "https://exec.mycompiler.io/run/%s" lang-id)
@@ -585,7 +607,8 @@ opposite a certain version of lang in `playonline-xxx-languags'."
     (list lang sender wrapper (assoc-default lang compiler-args))))
 
 (defun playonline-orgmode-src-block (&optional beg end)
-  "Return orgmode src block in the form of (mode code bounds)."
+  "Return orgmode src block between BEG and END.
+The return value is in the form of (mode code bounds)."
   (require 'org)
   (-if-let* ((src-element (org-element-at-point)))
       (list (funcall (or (playonline--fbound-and-true-p 'org-src--get-lang-mode)
@@ -600,7 +623,8 @@ opposite a certain version of lang in `playonline-xxx-languags'."
               (list (match-beginning 5) (match-end 5))))))
 
 (defun playonline-markdown-src-block (&optional beg end)
-  "Return markdown src block in the form of (mode code bounds)."
+  "Return markdown src block between BEG and END.
+The return value is in the form of (mode code bounds)."
   (require 'markdown-mode)
   (save-excursion
     (-if-let* ((lang (markdown-code-block-lang))
@@ -619,13 +643,12 @@ opposite a certain version of lang in `playonline-xxx-languags'."
 
 ;;;###autoload
 (defun playonline (&optional beg end)
-  "Play code online.
+  "Play code online between BEG and END.
 
 This function can be applied to:
 - buffer
 - region
-- block (or region in block) ;; require org-mode / markdown
-"
+- block (or region in block) ;; requires org / markdown mode"
   (interactive "r")
   (pcase-let*
       ((`(,mode ,code ,bounds)

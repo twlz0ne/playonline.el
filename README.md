@@ -33,4 +33,4 @@ This function can be applied to:
 
 - buffer
 - region
-- block (or region in block) ;; require org-mode / markdown
+- block (or region in block) ;; requires org / markdown mode
