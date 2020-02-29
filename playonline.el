@@ -643,13 +643,15 @@ The return value is in the form of (mode code bounds)."
 
 ;;;###autoload
 (defun playonline (&optional beg end)
-  "Play code online between BEG and END.
+  "Play code online.
 
 This function can be applied to:
 - buffer
-- region
-- block (or region in block) ;; requires org / markdown mode"
-  (interactive "r")
+- region from BEG to END
+- code block (requires org / markdown mode)"
+  (interactive (if (region-active-p)
+                   (list (region-beginning) (region-end))
+                 (list (point-min) (point-max))))
   (pcase-let*
       ((`(,mode ,code ,bounds)
         (pcase major-mode
