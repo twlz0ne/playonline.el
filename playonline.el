@@ -105,10 +105,11 @@ be called with one argument after RESPONSE-PREPFN."
     (let ((response-code (request-response-status-code response))
           (response-body (request-response-data response)))
       (if (= response-code 200)
-          (funcall response-fn (json-read-from-string
-                                (if response-prepfn
-                                    (funcall response-prepfn response-body)
-                                  response-body)))
+          (playonline--output-response-result
+           (funcall response-fn (json-read-from-string
+                                 (if response-prepfn
+                                     (funcall response-prepfn response-body)
+                                   response-body))))
         (error "Http response error: %s" response-body)))))
 
 ;;; playgrounds
@@ -504,6 +505,18 @@ LANG-ID to specific the language."
     (unless playonline-focus-p
       (select-window win))))
 
+(defun playonline--output-response-result (result)
+  "Output response RESULT."
+  (cond (playonline-output-to-buffer-p
+         (let ((output-buf (get-buffer-create playonline-buffer-name)))
+           (with-current-buffer output-buf
+             (read-only-mode -1)
+             (erase-buffer)
+             (insert result)
+             (read-only-mode 1)
+             (playonline--pop-to-buffer output-buf))))
+        (t result)))
+
 (defun playonline--handle-json-response (url-content-buf prepfn callback)
   "Handle json response in URL-CONTENT-BUF.
 Function PREPFN is used to process the http-body before converting to json.
@@ -518,16 +531,8 @@ Function CALLBACK accept an alist, and return output string."
       (pcase http-code
         (200 (let* ((resp (json-read-from-string
                            (if prepfn (funcall prepfn http-body) http-body)))
-                    (output (funcall callback resp))
-                    (output-buf (get-buffer-create playonline-buffer-name)))
-               (cond (playonline-output-to-buffer-p
-                      (with-current-buffer output-buf
-                        (read-only-mode -1)
-                        (erase-buffer)
-                        (insert output)
-                        (read-only-mode 1)
-                        (playonline--pop-to-buffer output-buf)))
-                     (t output))))
+                    (output (funcall callback resp)))
+               playonline--output-response-result output))
         (_ (error http-body))))))
 
 (defun playonline--get-shebang-command ()
