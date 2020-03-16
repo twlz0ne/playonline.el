@@ -2,7 +2,6 @@
 (source melpa)
 
 (depends-on "dash")
-(depends-on "json")
 (depends-on "request")
 
 (development

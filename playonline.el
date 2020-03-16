@@ -532,7 +532,7 @@ Function CALLBACK accept an alist, and return output string."
         (200 (let* ((resp (json-read-from-string
                            (if prepfn (funcall prepfn http-body) http-body)))
                     (output (funcall callback resp)))
-               playonline--output-response-result output))
+               (playonline--output-response-result output)))
         (_ (error http-body))))))
 
 (defun playonline--get-shebang-command ()
@@ -671,7 +671,7 @@ This function can be applied to:
         (playonline--get-lang-and-function
          (save-restriction
            (when bounds
-             (apply 'narrow-to-region bounds))
+             (apply #'narrow-to-region bounds))
            (playonline--get-mode-alias mode)))))
     (funcall sender lang (if wrapper
                              (funcall wrapper code)
