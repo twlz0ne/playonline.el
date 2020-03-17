@@ -5,7 +5,7 @@
 ;; Author: Gong Qijian <gongqijian@gmail.com>
 ;; Created: 2019/10/11
 ;; Version: 0.1.2
-;; Package-Requires: ((emacs "24.4") (json "1.2") (dash "2.1") (request "0.2"))
+;; Package-Requires: ((emacs "24.4") (dash "2.1") (request "0.2"))
 ;; URL: https://github.com/twlz0ne/playonline.el
 ;; Keywords: tools
 
