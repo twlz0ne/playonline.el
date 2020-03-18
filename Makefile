@@ -1,7 +1,7 @@
 EMACS ?= emacs
 ELS = playonline.el
 ELCS = playonline.elc
-TEST_ELS = cask-bootstrap.el playonline-test.el
+TEST_ELS = test/test-bootstrap.el test/playonline-test-helper.el test/playonline-test.el
 
 # If the first argument is "test"...
 ifeq (test, $(firstword $(MAKECMDGOALS)))
@@ -14,7 +14,7 @@ endif
 all: clean compile test
 
 %.elc:%.el
-	$(EMACS) -batch -L . -l cask-bootstrap.el -f batch-byte-compile $(ELS)
+	$(EMACS) -batch -L . -l test/test-bootstrap.el -f batch-byte-compile $(ELS)
 
 compile:$(ELCS)
 
